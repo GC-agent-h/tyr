@@ -44,11 +44,54 @@ The header typically includes, in order (**confirm exact order and gating agains
 
 ## Deliverables checklist
 
-- [ ] All standard header fields decoded in correct source order with correct version gating.
-- [ ] Byte-exact consumption of the Header chunk for all 10 files (including any game-specific blob).
-- [ ] Level names and version numbers pass a human plausibility check.
-- [ ] Feature flags identified and cross-referenced against Phase 8 behavior (revisit after implementing Phase 8).
-- [ ] At least one static cross-check (no live debugging available) resolving the game-specific blob question, per Step 0.3 (revised).
+- [x] All standard header fields decoded in correct source order with correct version gating.
+- [x] Byte-exact consumption of the Header chunk for all 10 files (including any game-specific blob).
+- [x] Level names and version numbers pass a human plausibility check.
+- [x] Feature flags identified and cross-referenced against Phase 8 behavior (revisit after implementing Phase 8).
+- [x] Static cross-check (no live debugging) resolving the game-specific blob question: **TYR writes NO game-specific blob** — `GameSpecificData` TArray count == 0 in all 10 files, and full-chunk consumption holds without it. (See phase02-empirical-findings.md.)
+
+### Source-of-truth correction (5.6)
+The struct/enum locations in this doc's "Source of truth" list are stale
+for 5.6. The authoritative definitions actually live in:
+- `UE/ReplayTypes.h` — `struct FNetworkDemoHeader`, `EReplayHeaderFlags`
+  (uint32 bitmask), `FReplayCustomVersion`, `ENetworkVersionHistory`.
+- `UE/ReplayTypes.cpp` — `operator<<(FArchive&, FNetworkDemoHeader&)`:
+  the exact field order and version-gating used below.
+
+### Decoded field order (from ReplayTypes.cpp operator<<, all 10 files = Version 19 / CustomVersions)
+```
+Magic                          u32  = 0x2CF5A13D   (validated)
+Version                        i32  = 19           (FReplayCustomVersion::CustomVersions)
+CustomVersions                 container: 3 entries
+   8417998a...bbc043ec...      v19  Replay tag
+   62915ca3...1c8e4bf7...      v42  FEngineNetworkCustomVersion
+   cc400d24...e0e94e7b...      v0   FGameNetworkCustomVersion
+NetworkChecksum                u32  = 0x0B528350   (FNetworkVersion::GetLocalNetworkVersion)
+EngineNetworkProtocolVersion   u32  = 42           (= engine-net custom version)
+GameNetworkProtocolVersion     u32  = 0            (= game-net custom version)
+Guid                           FGuid 16B           (per-file, FGuid::NewGuid())
+EngineVersion                  uint16 Major,Minor,Patch=5,6,0; uint32 Changelist=2147514999; FString Branch="++Tyr+release"
+PackageVersionUE               int32 FileVer=522, int32 UE5Ver=1017   (gated >= SavePackageVersionUE/17)
+PackageVersionLicenseeUE       int32 = 0
+LevelNamesAndTimes             TArray<FLevelNameAndTime{FString name, uint32 time_ms}>  (1 entry, name = "/TyrMap*/Maps/Map_*", time_ms=0)
+HeaderFlags                    u32  = 1            = EReplayHeaderFlags::ClientRecorded (bit0). DELTA_CHECKPOINTS (bit2) NOT set.
+GameSpecificData               TArray<FString>    count = 0  -> NO custom blob
+[RecordingMetadata gated >= 18]
+MinRecordHz       f32 = 0.0
+MaxRecordHz       f32 = 30.0
+FrameLimitInMS    f32 = -1.0
+CheckpointLimitInMS f32 = -1.0
+Platform          FString = "WindowsClient"
+BuildConfig       uint8  = 4   (EBuildConfiguration; 4 = Shipping per enum)
+BuildTarget       uint8  = 3   (EBuildTargetType; 3 = Game per enum)
+```
+Byte-exact consumption confirmed for all 10 files (226 or 234 bytes).
+
+### Phase 8 cross-reference (flag)
+`HeaderFlags = 1 = ClientRecorded` only. `DeltaCheckpoints` (1<<2) is
+**NOT** set -> TYR replays use full (non-delta) checkpoints. Phase 8 must
+decode self-contained checkpoints, not delta checkpoints. (Revisit after
+Phase 8 to retro-confirm.)
 
 ## Suggested commit breakdown
 

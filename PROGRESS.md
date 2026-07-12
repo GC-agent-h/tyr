@@ -46,7 +46,7 @@ This file is the single source of truth for project status. Update it **every ti
 |---|---|---|---|
 | 00 — Overview & Setup | ✅ Done (validated + merged + tagged) | `master` @ `phase00-complete` | 2026-07-12 |
 | 01 — Outer Container Format | ✅ Done (validated + merged + tagged) | `master` @ `phase01-complete` | 2026-07-12 |
-| 02 — Demo Header | ⬜ Not started | | |
+| 02 — Demo Header | ✅ Done (validated + merged + tagged) | `master` @ `phase02-complete` | 2026-07-12 |
 | 03 — Bit-Level Primitives | ⬜ Not started | | |
 | 03.5 — Re-validate Phase 1/2 with Phase 3 primitives | ⬜ Not started | | |
 | 04 — Iris NetRefHandle / Replication Protocol Descriptors | ⬜ Not started | | |
@@ -107,19 +107,23 @@ just under fewer commits than the plan listed)
 
 ## Phase 02 — Demo Header
 
-- [ ] Standard header fields decoded, correctly version-gated
-- [ ] Byte-exact consumption of Header chunk across all 10 files
-- [ ] Level name / version plausibility check passed
-- [ ] Feature flags identified, cross-referenced against Phase 8 behavior
-- [ ] Static cross-check (no live debugging available) resolving game-specific blob question
+- [x] Standard header fields decoded, correctly version-gated
+- [x] Byte-exact consumption of Header chunk across all 10 files
+- [x] Level name / version plausibility check passed
+- [x] Feature flags identified, cross-referenced against Phase 8 behavior
+- [x] Static cross-check (no live debugging available) resolving game-specific blob question
 
-**Commits:**
-- [ ] `feat(phase02): parse standard demo header fields with version gating`
-- [ ] `feat(phase02): implement feature flag bitmask decoding`
-- [ ] `feat(phase02): detect and parse game-specific header blob (if present)`
-- [ ] `test(phase02): byte-exact chunk consumption assertion across samples`
-- [ ] `docs(phase02): static cross-check of header fields incl. custom blob`
-- [ ] `docs(phase02): note feature-flag cross-reference to revisit after phase08`
+**Commits:** (source-of-truth located in `UE/ReplayTypes.h` + `UE/ReplayTypes.cpp`
+`operator<<`; the engine source itself had not been in the initial /UE subset,
+so this phase was blocked until those two files were added. Field order and
+gating are taken verbatim from `operator<<`.)
+
+- [x] `feat(phase02): parse standard demo header fields with version gating` (tools/header.py — full FNetworkDemoHeader decode, byte-exact across 10 files)
+- [x] `feat(phase02): implement feature flag bitmask decoding` (`EReplayHeaderFlags` IntFlag; HeaderFlags=1=ClientRecorded, DeltaCheckpoints NOT set)
+- [x] `feat(phase02): detect and parse game-specific header blob (if present)` (GameSpecificData TArray count=0 in all files -> no custom blob; byte-exact holds)
+- [x] `test(phase02): byte-exact chunk consumption assertion across samples` (tools/header.py main() asserts exact consumption + Magic/Version for all 10; tools/diff_header*.py + annotate_header_tail.py supporting evidence)
+- [x] `docs(phase02): static cross-check of header fields incl. custom blob` (docs/02-demo-header.md updated with decoded field order; docs/phase02-empirical-findings.md)
+- [x] `docs(phase02): note feature-flag cross-reference to revisit after phase08` (DELTA_CHECKPOINTS not set -> Phase 8 uses full checkpoints; doc note added)
 
 ---
 
