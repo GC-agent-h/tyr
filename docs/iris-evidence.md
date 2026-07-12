@@ -47,3 +47,45 @@ Both "compiled-in" (E1) and "runtime-instantiated" (E2) are satisfied. This
 is the strongest form of *static* evidence available without a live
 debugger. It is treated as settled per `README.md` / `00-overview-and-setup.md`
 Step 0.1 and must not be re-litigated in later phases.
+
+## Phase 04 — sub-step 1: NetRefHandleCache / FNetToken source-verified decode (REAL-EVIDENCE VALIDATED)
+
+### Source of the wire layout (all in `/UE`)
+- `FNetRefHandle` operator<< — `UE/Iris/Private/Iris/ReplicationSystem/NetRefHandle.cpp:69-102`
+  and layout constants in `UE/NetRefHandle.h`. Wire = `1 valid-bit` + `SerializeIntPacked64(Id)`
+  (Id = (Serial<<1)|StaticBit). Static = ODD Id; dynamic = EVEN Id. ReplicationSystemId is
+  reconstructable context, NOT on the wire.
+- `FNetToken` — `UE/NetToken.h` + `UE/Iris/Private/Iris/ReplicationSystem/NetTokenStore.cpp:128-160`.
+  Wire = `SerializeIntPacked(Index)` + `1 auth-bit` + (`3-bit TypeId` only when not supplied
+  by a typed store).
+- NetToken export stream — `UE/Iris/Private/Iris/ReplicationSystem/NetTokenDataStream.cpp:207-217`:
+  `while(ReadBool()){ ReadNetToken; ReadTokenData(FString) }`, each FString ReadAlign'd.
+
+### Real-evidence validation (not synthetic)
+`tools/probe_phase04_iris.py` runs the source-verified decoder against the actual
+`TyrReplay*.replay` checkpoints. Across **every checkpoint of TyrReplay2, TyrReplay3**
+the decoder recovers an identical 4-entry Iris NetToken export table:
+
+| replay | token idx (type=0, auth=0) | payload |
+|---|---|---|
+| TyrReplay2 | 1099392 / 1099520 / 1099648 / 1050752 | `TyrPlayerComponentSubsystem_2147050318`, `TyrPlayerTechTreeSubsystem_2147050317`, `TyrTestPlayerStateSubsystem_2147050316`, `/Game/Blueprints/GameModes/BP_TyrGameState` |
+| TyrReplay3 | 222299456 / 222299584 / 222299712 / 134219584 | `TyrPlayerComponentSubsystem_2147020335`, `TyrPlayerTechTreeSubsystem_2147020334`, `TyrTestPlayerStateSubsystem_2147020333`, `/TyrVehicleRecall/Ability/BP_RecallPad` |
+
+The token IDs are stable per-replay (same table repeated in every checkpoint of that
+replay), exactly as an Iris NetToken export dictionary should behave. The payloads are
+real Tyr object-path / subsystem-name strings, confirming the layout matches the engine
+source — NOT a legacy `FNetworkGUID`/`NetFieldExport` shape.
+
+### Blocker resolved
+The earlier phase-status note flagged missing Public Iris headers (`NetRefHandle.h`,
+`NetToken.h`, `NetHandle.h`) as a hard blocker on confirming exact bit layouts.
+All three are now present in `/UE` (`UE/NetRefHandle.h`, `UE/NetToken.h`,
+`UE/NetHandle.h`). The wire layouts above are confirmed directly from them — no guess.
+
+### Deliverables
+- `tools/iris_handles.py` — `NetRefHandle`, `NetToken`, `read_net_ref_handle`,
+  `read_net_token`, `consume_net_token_export_stream` (all mirror the C++ source).
+- `tools/iris_netrefhandle_cache.py` — `NetRefHandleCache` (static path-name resolution,
+  streaming-pass API, deferred token binding for invalid-handle references).
+- `tools/selftest_iris_handles.py` — 6 source-verified round-trip + cache tests, ALL PASS.
+- `tools/probe_phase04_iris.py` — real-replay evidence sweep.
