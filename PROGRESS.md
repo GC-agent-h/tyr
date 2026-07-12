@@ -93,12 +93,15 @@ Status values: `⬜ Not started` / `🟨 In progress` / `✅ Done (validated + m
 - [x] Chunk-table report printed and eyeballed per file
 - [x] Field-by-field static cross-check (no live debugging available)
 
-**Commits:**
-- [ ] `feat(phase01): parse magic number and file version`
-- [ ] `feat(phase01): parse top-level metadata block`
-- [ ] `feat(phase01): implement chunk table skeleton walker with EOF assertion`
-- [ ] `test(phase01): cross-file consistency report across 10 samples`
-- [ ] `docs(phase01): static cross-check of header/metadata fields`
+**Commits:** (reconciled 2026-07-12 to actual git history — the
+5-planned-commit breakdown was consolidated during implementation into 3
+real commits; `parse top-level metadata block` and `chunk table skeleton
+walker` were folded into the `feat(phase01): parse magic number and file
+version` commit rather than split out, so the work is real and validated,
+just under fewer commits than the plan listed)
+- [x] `feat(phase01): parse magic number and file version` (incl. top-level metadata block + chunk table skeleton walker w/ EOF assertion — `650254c`)
+- [x] `test(phase01): cross-file consistency report across 10 samples` (`911b2bb`)
+- [x] `docs(phase01): static cross-check of header/metadata fields` (`9614252`)
 
 ---
 
