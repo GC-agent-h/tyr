@@ -210,7 +210,83 @@ def read_token_data_fstring(reader: BitReader) -> str:
     return s.rstrip("\x00")
 
 
-# Map of TypeId -> payload reader. For sub-step 1 (static path-name resolution)
+# ---------------------------------------------------------------------------
+# FNetObjectReference (full reference)
+# ---------------------------------------------------------------------------
+@dataclass
+class NetObjectReference:
+    handle: NetRefHandle
+    is_exported: bool = False
+    # For exported references (static objects with a relative path, or the first
+    # time a dynamic object's path is sent): the relative-path token + payload.
+    path_token: Optional[NetToken] = None
+    path_payload: Optional[str] = None
+    # Recursive outer reference (the object this one is a subobject/child of).
+    outer: Optional["NetObjectReference"] = None
+
+
+def read_net_object_reference(
+    reader: BitReader,
+    recursion_limit: int = 16,
+    token_data_readers: Optional[Dict[int, Callable[[BitReader], object]]] = None,
+) -> NetObjectReference:
+    """Mirror FObjectReferenceCache::ReadFullReferenceInternal
+    (ObjectReferenceCache.cpp:1524-1650).
+
+    Wire (for a VALID handle):
+        FNetRefHandle              = 1 valid-bit + SerializeIntPacked64(Id)
+        bIsExported (1 bit)
+        if bIsExported:
+            bNoLoad      (1 bit)             # implicit true for dynamic
+            bHasPath     (1 bit)
+            if bHasPath:
+                RelativePath = ReadNetToken(known_type_id=store type)  # NO TypeId on wire
+                ConditionalReadNetTokenData -> 1 export-bit; if set, ReadTokenData(FString)
+                outer = ReadFullReferenceInternal(OuterRef)   # recursion
+        if not exported: just the handle (dynamic -> no-load, resolved via export)
+
+    NOTE on the path token: inside an object reference the token is written via the
+    store's WriteNetToken (bWriteTypeId=FALSE), so TypeId is NOT on the wire; we
+    pass known_type_id=0 (the FString/Name store type id) to read_net_token.
+    The payload FString is ReadAlign'd, matching ReadTokenData.
+    """
+    readers = token_data_readers if token_data_readers is not None else DEFAULT_TOKEN_DATA_READERS
+    handle = read_net_ref_handle(reader)
+    if not handle.is_valid:
+        return NetObjectReference(handle=handle, is_exported=False)
+
+    is_exported = bool(reader.read_bit())
+    if not is_exported:
+        return NetObjectReference(handle=handle, is_exported=False)
+
+    if reader.is_error():
+        return NetObjectReference(handle=handle, is_exported=True)
+
+    # bNoLoad bit (implicit true for dynamic; we read it regardless, as the
+    # engine does for exported refs — ObjectReferenceCache.cpp:1569).
+    reader.read_bit()
+
+    ref = NetObjectReference(handle=handle, is_exported=True)
+    if recursion_limit <= 0:
+        return ref
+
+    b_has_path = bool(reader.read_bit())
+    if b_has_path:
+        # Path token WITHOUT TypeId on the wire (store-supplied type id).
+        path_token = read_net_token(reader, known_type_id=0)
+        # ConditionalReadNetTokenData: 1 export-bit, then FString payload if set.
+        b_token_exported = bool(reader.read_bit())
+        payload: Optional[str] = None
+        if b_token_exported:
+            reader_fn = readers.get(path_token.type_id, read_token_data_fstring)
+            payload = reader_fn(reader)  # type: ignore[assignment]
+        else:
+            payload = None
+        ref.path_token = path_token
+        ref.path_payload = payload
+        # Recurse into the outer reference.
+        ref.outer = read_net_object_reference(reader, recursion_limit - 1, readers)
+    return ref
 # the path/name tokens are FStrings; that is the only payload shape we decode.
 # Additional type ids (e.g. GameplayTag) are wired in later sub-steps; until
 # then an unknown type id is decoded as FString and flagged (see cache).

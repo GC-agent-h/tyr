@@ -52,6 +52,8 @@ from iris_handles import (
     NetRefHandle,
     NetToken,
     read_net_token,
+    read_net_object_reference,
+    NetObjectReference,
     read_token_data_fstring,
 )
 
@@ -237,7 +239,67 @@ class NetRefHandleCache:
         self.handle_cache[raw_id] = info
         return info
 
-    # -- queries ------------------------------------------------------------
+    # -- FNetObjectReference (inline, dynamic-spawn resolution) ------------
+    def observe_object_reference(
+        self,
+        ref: "NetObjectReference",
+        chunk_index: Optional[int] = None,
+        offset_bits: Optional[int] = None,
+    ) -> List[ResolvedInfo]:
+        """Consume a decoded FNetObjectReference (from read_net_object_reference,
+        mirroring ObjectReferenceCache::ReadFullReferenceInternal) and correlate it
+        into the cache.
+
+        For a DYNAMIC reference this is the spawn-info path: the reference carries
+        the (even-Id) FNetRefHandle, the path token (class/path string), and the
+        outer reference recursively. We record each handle, bind the path, and walk
+        the outer chain. Returns the list of ResolvedInfo records touched.
+
+        For a STATIC reference the path resolves via the NetToken store (sub-step 1);
+        here we just ensure the handle + path are cached.
+        """
+        touched: List[ResolvedInfo] = []
+        if not ref.handle.is_valid:
+            return touched
+
+        # Bind the path token payload if exported inline in this reference.
+        path = None
+        if ref.path_token is not None:
+            # The inline path token may or may not also be in the global token store.
+            cached = self.token_store.get(ref.path_token.value())
+            if cached is not None:
+                path = cached.payload
+            elif ref.path_payload is not None:
+                # Register the inline path token as a token export (it was sent here).
+                entry = self.observe_token_export(
+                    ref.path_token, ref.path_payload, chunk_index, offset_bits)
+                path = ref.path_payload
+                cached = entry
+            if cached is not None and cached.bound_to_handle is None:
+                cached.bound_to_handle = ref.handle.raw_id
+
+        # Record/refresh the handle.
+        info = self.observe_handle(
+            ref.handle,
+            path_token=ref.path_token,
+            kind_hint="dynamic" if ref.handle.is_dynamic else "static_path",
+            chunk_index=chunk_index,
+            offset_bits=offset_bits,
+        )
+        if path is not None and info.path is None:
+            info.path = path
+            if info.kind == "unknown":
+                info.kind = "dynamic" if ref.handle.is_dynamic else "static_path"
+        touched.append(info)
+
+        # Recurse into the outer reference chain.
+        if ref.outer is not None:
+            touched.extend(self.observe_object_reference(
+                ref.outer, chunk_index, offset_bits))
+        return touched
+
+
+    # -- queries -----------------------------------------------------------
     def resolve_handle(self, handle: NetRefHandle) -> Optional[ResolvedInfo]:
         if not handle.is_valid:
             # Maybe a pending path reference.

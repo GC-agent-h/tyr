@@ -22,6 +22,12 @@ Vectors are derived directly:
     We build with the encoder helpers and decode with consume_net_token_export_stream,
     asserting the (token, payload) pairs round-trip and the stop-bit terminates.
 
+  FNetObjectReference (ObjectReferenceCache.cpp:1524 ReadFullReferenceInternal)
+    wire = [FNetRefHandle][1 export-bit]
+            if exported: [1 bNoLoad][1 bHasPath]
+                if hasPath: [FNetToken WITHOUT TypeId on wire][1 token-export-bit][FString][recurse OuterRef]
+    We build with the encoder helpers and decode with read_net_object_reference.
+
 Also asserts the architectural facts from source:
   * Static handles have ODD raw_id; dynamic have EVEN raw_id (NetRefHandle.h:60-64).
   * ReplicationSystemId is NOT on the wire (only Id is); reconstructable context.
@@ -37,6 +43,7 @@ from iris_handles import (
     write_net_ref_handle,
     read_net_token,
     write_net_token,
+    read_net_object_reference,
     read_token_data_fstring,
     consume_net_token_export_stream,
 )
@@ -161,13 +168,74 @@ def test_cache_static_path_binding():
     print("PASS: deferred static path binding (handle ref precedes token export)")
 
 
+def test_object_reference_dynamic_roundtrip():
+    # Dynamically-spawned object reference (even Id => dynamic).
+    # Wire: [FNetRefHandle][export-bit=1][bNoLoad=1][bHasPath=1]
+    #        [path token (NO TypeId on wire)][token-export-bit=1][FString payload][outer: not exported]
+    w = BitWriter()
+    dyn_handle = NetRefHandle.make(serial=6, is_static=False, replication_system_id=1)
+    write_net_ref_handle(w, dyn_handle)
+    w.write_bit(1)            # bIsExported
+    w.write_bit(1)            # bNoLoad
+    w.write_bit(1)            # bHasPath
+    # path token WITHOUT TypeId on wire (store-supplied type id = 0).
+    path_tok = NetToken(index=42, type_id=0, is_assigned_by_authority=True)
+    write_net_token(w, path_tok, write_type_id=False)
+    w.write_bit(1)            # token export-bit
+    tmp = BitWriter(); tmp.write_fstring("BP_Ammunition_Standard_C"); w.write_align(); w.write_bytes(tmp.getvalue())
+    # Outer reference: a valid handle, NOT exported (dynamic resolves via export).
+    w.write_bit(1)            # FNetRefHandle valid
+    outer = NetRefHandle.make(serial=2, is_static=True, replication_system_id=1)
+    w.serialize_int_packed64(outer.raw_id)
+    w.write_bit(0)            # outer bIsExported = false
+    r = BitReader(w.getvalue())
+    ref = read_net_object_reference(r)
+    assert ref.handle.is_dynamic, f"should be dynamic (even Id): {ref.handle.to_compact_string()}"
+    assert ref.is_exported, "should be exported"
+    assert ref.path_token is not None and ref.path_token.index == 42, "path token lost"
+    assert ref.path_token.type_id == 0, "inline path token must NOT carry TypeId on wire"
+    assert ref.path_payload == "BP_Ammunition_Standard_C", f"payload wrong: {ref.path_payload!r}"
+    assert ref.outer is not None, "outer not recursed"
+    assert ref.outer.handle.is_static and not ref.outer.is_exported, "outer should be static, not exported"
+    print("PASS: FNetObjectReference dynamic (even Id) + inline path token + outer recursion")
+
+
+def test_cache_dynamic_resolution():
+    cache = NetRefHandleCache(replication_system_id=1)
+    w = BitWriter()
+    dyn = NetRefHandle.make(serial=10, is_static=False, replication_system_id=1)
+    write_net_ref_handle(w, dyn)
+    w.write_bit(1); w.write_bit(1); w.write_bit(1)
+    ptok = NetToken(index=7, type_id=0, is_assigned_by_authority=True)
+    write_net_token(w, ptok, write_type_id=False)
+    w.write_bit(1)
+    tmp = BitWriter(); tmp.write_fstring("BP_TyrGameState_C_0"); w.write_align(); w.write_bytes(tmp.getvalue())
+    outer = NetRefHandle.make(serial=3, is_static=True, replication_system_id=1)
+    w.write_bit(1); w.serialize_int_packed64(outer.raw_id); w.write_bit(0)
+    r = BitReader(w.getvalue())
+    ref = read_net_object_reference(r)
+    touched = cache.observe_object_reference(ref, chunk_index=3, offset_bits=512)
+    # Should have touched the dynamic handle + the static outer (2 records).
+    assert len(touched) == 2, f"expected 2 touched, got {len(touched)}"
+    info = cache.resolve_handle(dyn)
+    assert info is not None and info.is_dynamic, "dynamic handle not classified"
+    assert info.path == "BP_TyrGameState_C_0", f"dynamic path not bound: {info.path!r}"
+    assert info.kind == "dynamic"
+    outer_info = cache.resolve_handle(outer)
+    assert outer_info is not None and outer_info.is_static, "outer not static"
+    assert cache.stats()["dynamic"] == 1 and cache.stats()["static"] == 1
+    print("PASS: dynamic spawn-info resolution (even-Id handle + inline path + outer)")
+
+
 def main() -> int:
     test_net_ref_handle_roundtrip()
     test_net_ref_handle_static_dynamic_parity()
     test_net_token_roundtrip()
     test_net_token_stream_roundtrip()
     test_cache_static_path_binding()
-    print("\nALL PHASE-04 SUB-STEP-1 SELF-TESTS PASSED (source-verified encodings).")
+    test_object_reference_dynamic_roundtrip()      # sub-step 2
+    test_cache_dynamic_resolution()                # sub-step 2
+    print("\nALL PHASE-04 SUB-STEP-1+2 SELF-TESTS PASSED (source-verified encodings).")
     return 0
 
 
