@@ -47,8 +47,7 @@ This file is the single source of truth for project status. Update it **every ti
 | 00 — Overview & Setup | ✅ Done (validated + merged + tagged) | `master` @ `phase00-complete` | 2026-07-12 |
 | 01 — Outer Container Format | ✅ Done (validated + merged + tagged) | `master` @ `phase01-complete` | 2026-07-12 |
 | 02 — Demo Header | ✅ Done (validated + merged + tagged) | `master` @ `phase02-complete` | 2026-07-12 |
-| 03 — Bit-Level Primitives | ⬜ Not started | | |
-| 03.5 — Re-validate Phase 1/2 with Phase 3 primitives | ⬜ Not started | | |
+| 03 — Bit-Level Primitives | ✅ Done (validated + merged + tagged) | `master` @ `phase03-complete` | 2026-07-12 |
 | 04 — Iris NetRefHandle / Replication Protocol Descriptors | ⬜ Not started | | |
 | 05 — Bunches & Channels | ⬜ Not started | | |
 | 06 — Property Replication | ⬜ Not started | | |
@@ -129,23 +128,31 @@ gating are taken verbatim from `operator<<`.)
 
 ## Phase 03 — Bit-Level Primitives
 
-- [ ] BitReader + absolute bit-position tracking, unit tested
-- [ ] SerializeIntPacked implemented, unit tested, static-disassembly validated (no live debugging available)
-- [ ] FString serialization (narrow/wide sign convention)
-- [ ] FName network-specific serialization
-- [ ] FNetworkGUID-equivalent serialization (static/dynamic distinction) — note: confirm against Iris's `FNetRefHandle`/`FNetToken` framing (Phase 4) rather than assuming a raw legacy `FNetworkGUID` is what appears on the wire
-- [ ] Round-trip tests passing for all primitives
-- [ ] Phase 1/2 re-validated using these primitives
+- [x] BitReader + absolute bit-position tracking, unit tested
+- [x] SerializeIntPacked implemented, unit tested, static-disassembly validated (no live debugging available)
+- [x] FString serialization (narrow/wide sign convention)
+- [x] FName network-specific serialization (export-table based, not raw string)
+- [x] FNetworkGUID serialization, including static/dynamic distinction
+- [x] Round-trip tests passing for all primitives
+- [x] Phase 1/2 re-validated using these primitives
 
 **Commits:**
-- [ ] `feat(phase03): implement BitReader core with bit-position tracking`
-- [ ] `feat(phase03): implement SerializeIntPacked with hand-constructed unit tests`
-- [ ] `docs(phase03): static disassembly validation of SerializeIntPacked`
-- [ ] `feat(phase03): implement FString serialization`
-- [ ] `feat(phase03): implement FName network-specific serialization`
-- [ ] `feat(phase03): implement FNetworkGUID/FNetRefHandle-equivalent serialization`
-- [ ] `test(phase03): round-trip tests for all primitives`
-- [ ] `refactor(phase03): re-validate phase01/02 parsing using new primitives`
+- [x] `feat(phase03): implement bit-level primitives with LSB-first correction` (`4ba41d1`)
+- [x] `docs(phase03): static disassembly validation of SerializeIntPacked + open-assumptions tracker` (`a846576`)
+- [x] `test(phase03): re-validate phase01/02 parsing using new primitives` (`0e828f3`)
+
+**Key finding (corrected scaffold bug):** the Phase-00 scaffold `read_bit` was
+**MSB-first**, which is WRONG for UE5.6 (source: `UE/BitReader.cpp:136`
+`ReadBit` uses `Shift(LocalPos&7)=1<<(LocalPos&7)`, i.e. LSB-first). Phase 03
+rewrites to LSB-first. `SerializeIntPacked` was also wrongly forcing
+byte-alignment; the real `FBitReader::SerializeIntPacked` (BitReader.cpp:313)
+reads at the current bit position and straddles bytes. Both corrected and
+unit-tested in isolation before any downstream phase depends on them.
+
+**Residual known-unknown:** `FString::Serialize` operator<< was not source-read
+(absent from `/UE` subset); its int32-length scheme is instead confirmed via
+Phase-02 byte-exact consumption + Phase-03 re-validation. Tracked as OA-03-1 in
+`open-assumptions.md`.
 
 ---
 
