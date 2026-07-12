@@ -318,6 +318,10 @@ def consume_net_token_export_stream(
         if reader.is_error():
             break
         token = read_net_token(reader, known_type_id=None)  # TypeId on wire
+        # An invalid token (Index == InvalidTokenIndex == 0) carries no payload;
+        # the engine never exports one, but be source-faithful and skip the read.
+        if not token.is_valid:
+            continue
         reader_fn = readers.get(token.type_id, read_token_data_fstring)
         data = reader_fn(reader)
         on_token(token, data)

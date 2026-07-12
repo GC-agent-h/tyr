@@ -48,6 +48,7 @@ from iris_handles import (
     consume_net_token_export_stream,
 )
 from iris_netrefhandle_cache import NetRefHandleCache, ResolvedInfo
+from iris_net_token_store import NetTokenStoreCache
 
 
 def _roundtrip(reader_fn, writer_fn, value):
@@ -227,6 +228,49 @@ def test_cache_dynamic_resolution():
     print("PASS: dynamic spawn-info resolution (even-Id handle + inline path + outer)")
 
 
+def test_token_store_typed_resolution():
+    # Build an export stream with TWO typed tokens (type 0 = string, type 2 = name)
+    # mirroring UNetTokenDataStream::ReadData (NetTokenDataStream.cpp:194).
+    w = BitWriter()
+    w.write_bit(1)  # stop-bit: a token follows
+    tok0 = NetToken(index=3, type_id=0, is_assigned_by_authority=True)
+    write_net_token(w, tok0, write_type_id=True)
+    tmp = BitWriter(); tmp.write_fstring("/Game/Blueprints/BP_TyrGameState"); w.write_align(); w.write_bytes(tmp.getvalue())
+    w.write_bit(1)  # stop-bit: another token
+    tok2 = NetToken(index=1, type_id=2, is_assigned_by_authority=False)
+    write_net_token(w, tok2, write_type_id=True)
+    tmp2 = BitWriter(); tmp2.write_fstring("WorldGravity"); w.write_align(); w.write_bytes(tmp2.getvalue())
+    w.write_bit(0)  # stop-bit: end of stream
+
+    cache = NetTokenStoreCache()
+    r = BitReader(w.getvalue())
+    n = cache.import_export_stream(r, chunk_index=0)
+    assert n == 2, f"expected 2 imports, got {n}"
+    # Resolution is two-dimensional (TypeId, Index).
+    e0 = cache.resolve(tok0)
+    assert e0 is not None and e0.payload == "/Game/Blueprints/BP_TyrGameState", e0
+    e2 = cache.resolve(tok2)
+    assert e2 is not None and e2.payload == "WorldGravity", e2
+    # Type-0 store should NOT leak into type-2 store.
+    assert cache.resolve(NetToken(index=3, type_id=2, is_assigned_by_authority=False)) is None
+    st = cache.stats()
+    assert st["type_ids_present"] == [0, 2], st
+    assert st["per_type_count"] == {0: 1, 2: 1}, st
+    print("PASS: typed FNetToken store resolution ((TypeId,Index)->payload), isolated per type")
+
+
+def test_token_store_in_netrefhandle_cache():
+    # The standalone store should be fed whenever observe_token_export is called.
+    cache = NetRefHandleCache(replication_system_id=1)
+    tok = NetToken(index=5, type_id=0, is_assigned_by_authority=True)
+    cache.observe_token_export(tok, "BP_Ammunition_Standard_C", chunk_index=2, offset_bits=120)
+    # Both the flat sub-step-1 map and the typed store should resolve it.
+    assert cache.resolve_token(tok) is not None
+    typed = cache.net_token_store.resolve(tok)
+    assert typed is not None and typed.payload == "BP_Ammunition_Standard_C", typed
+    print("PASS: NetRefHandleCache routes token exports into typed store (sub-step 3)")
+
+
 def main() -> int:
     test_net_ref_handle_roundtrip()
     test_net_ref_handle_static_dynamic_parity()
@@ -235,7 +279,9 @@ def main() -> int:
     test_cache_static_path_binding()
     test_object_reference_dynamic_roundtrip()      # sub-step 2
     test_cache_dynamic_resolution()                # sub-step 2
-    print("\nALL PHASE-04 SUB-STEP-1+2 SELF-TESTS PASSED (source-verified encodings).")
+    test_token_store_typed_resolution()            # sub-step 3
+    test_token_store_in_netrefhandle_cache()       # sub-step 3
+    print("\nALL PHASE-04 SUB-STEP-1+2+3 SELF-TESTS PASSED (source-verified encodings).")
     return 0
 
 

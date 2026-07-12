@@ -56,6 +56,7 @@ from iris_handles import (
     NetObjectReference,
     read_token_data_fstring,
 )
+from iris_net_token_store import NetTokenStoreCache
 
 
 @dataclass
@@ -99,8 +100,11 @@ class NetRefHandleCache:
     def __init__(self, replication_system_id: int = 1):
         self.replication_system_id = replication_system_id
 
-        # token (NetToken.value()) -> TokenEntry
+        # token (NetToken.value()) -> TokenEntry  (flat map, used by sub-step 1)
         self.token_store: Dict[int, TokenEntry] = {}
+
+        # Standalone typed FNetToken store cache (sub-step 3): TypeId -> {Index -> payload}.
+        self.net_token_store = NetTokenStoreCache()
 
         # handle (raw_id) -> ResolvedInfo  (also holds "pending" path references,
         # keyed by ("pending", token.value()) until a complete handle arrives).
@@ -136,6 +140,9 @@ class NetRefHandleCache:
             first_seen_offset_bits=offset_bits,
         )
         self.token_store[token.value()] = entry
+        # Also populate the standalone typed store (sub-step 3).
+        self.net_token_store.import_token(
+            token, payload, chunk_index=chunk_index, offset_bits=offset_bits)
         self._export_count += 1
 
         # If some handle reference is waiting on this exact path, bind it now.
