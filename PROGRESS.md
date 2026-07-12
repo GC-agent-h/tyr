@@ -45,7 +45,7 @@ This file is the single source of truth for project status. Update it **every ti
 | Phase | Status | Branch/Tag | Last updated |
 |---|---|---|---|
 | 00 — Overview & Setup | ✅ Done (validated + merged + tagged) | `master` @ `phase00-complete` | 2026-07-12 |
-| 01 — Outer Container Format | ⬜ Not started | | |
+| 01 — Outer Container Format | ✅ Done (validated + merged + tagged) | `master` @ `phase01-complete` | 2026-07-12 |
 | 02 — Demo Header | ⬜ Not started | | |
 | 03 — Bit-Level Primitives | ⬜ Not started | | |
 | 03.5 — Re-validate Phase 1/2 with Phase 3 primitives | ⬜ Not started | | |
@@ -91,7 +91,7 @@ Status values: `⬜ Not started` / `🟨 In progress` / `✅ Done (validated + m
 - [x] Top-level metadata block parsed (incl. bCompressed/bEncrypted confirmed false)
 - [x] Chunk table walker lands exactly on EOF for all 10 files
 - [x] Chunk-table report printed and eyeballed per file
-- [ ] Field-by-field static cross-check (no live debugging available)
+- [x] Field-by-field static cross-check (no live debugging available)
 
 **Commits:**
 - [ ] `feat(phase01): parse magic number and file version`
