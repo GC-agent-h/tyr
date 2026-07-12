@@ -1,0 +1,93 @@
+# Phase 6 — Property Replication (The Core Payload) — Iris
+
+> **Rewritten for Iris.** This project's replication backend is confirmed Iris (`00-overview-and-setup.md`, Step 0.1). Legacy's `FRepLayout`/`RepLayoutCmd`/handle-delta loop does **not** apply — replace it with Iris's descriptor-driven, `FReplicationStateDescriptor`-based state serialization. No live debugging is available; every "live debugger cross-check" below is replaced by the static/redundant-path methodology in `00-overview-and-setup.md` Step 0.3 (revised).
+
+## Goal
+
+Decode the actual replicated property values carried inside Iris data-stream payloads (Phase 5's output), using the replication protocol/descriptor caches (Phase 4) to resolve which property each chunk of bits belongs to, and the SDK's type information to interpret the bits correctly. This remains the highest-value and highest-risk phase.
+
+## Source of truth
+
+- `Engine/Source/Runtime/IrisCore/Private/Iris/ReplicationSystem/ReplicationStateDescriptorBuilder.cpp` — **read this closely, not just skim it**, the Iris analog of the original doc's "read RepLayout.cpp closely" warning. This is what computes each class's replicated-state layout (the "schema" a property is packed according to) from reflected properties. As with legacy's `InitFromObjectClass`, do not assume this traversal order matches raw `UPROPERTY` declaration order — confirm from source.
+- `Engine/Source/Runtime/IrisCore/Private/Iris/ReplicationSystem/ReplicationReader.cpp` and `ReplicationWriter.cpp` — the actual per-state bit-packing/reading loop, replacing `SendProperties`/`ReceiveProperties`.
+- `Engine/Source/Runtime/IrisCore/Public/Iris/ReplicationSystem/ReplicationStateDescriptor.h` and `ReplicationFragment.h` — struct/enum definitions for descriptors, fragments (a "fragment" is Iris's unit of replicated state attached to an object — an object can own multiple fragments).
+- `Engine/Source/Runtime/IrisCore/Private/Iris/Serialization/` (exact subpath varies) — the `NetSerializer` implementations for individual types, replacing per-type logic that used to live inline in `RepLayout.cpp`. Iris registers one `NetSerializer` per type rather than branching on type inline — expect a more modular but more spread-out set of source files than legacy's single `RepLayout.cpp`.
+- `Engine/Source/Runtime/IrisCore/Private/Iris/ReplicationSystem/Conditionals/` or similar — Iris's replacement for `ELifetimeCondition`/`COND_*` handling (Iris supports similar conditional replication concepts but check its own condition/filtering config path rather than assuming it's a straight port of the legacy enum).
+- `Engine/Source/Runtime/IrisCore/Private/Iris/ReplicationSystem/FastArray/` or equivalent — Iris's fast-array-serializer replacement, if TYR uses any `TArray`-of-struct replicated properties with delta semantics; confirm exact path/naming in your 5.6 tree.
+
+## Structure inside an Iris object's replicated payload
+
+Once you have a reassembled data-stream payload (Phase 5) and know which `FNetRefHandle` (and therefore which class, via Phase 4) it belongs to, the payload follows Iris's descriptor-driven layout rather than a handle-delta loop. The exact wire shape needs to be read from `ReplicationReader.cpp` rather than assumed — at minimum expect:
+
+```
+loop (per replicated fragment/state on this object):
+    dirty/changed-state indicator (bitmask or index list identifying which states changed this update — read the exact encoding from ReplicationReader.cpp, don't assume it mirrors legacy's per-property handle loop)
+    for each changed state/member:
+        resolve state -> SDK property definition (via Phase 4's protocol/descriptor cache)
+        value = deserialize via the member's registered NetSerializer
+        record(net_ref_handle, property_name, value, frame_timestamp)
+```
+
+**Do not port the legacy field-handle delta-encoding loop wholesale.** Iris's dirty-state signaling mechanism is architecturally different (descriptor/fragment-based rather than flat handle-per-property), and assuming the legacy shape will desync silently just as the original doc warned about legacy's own delta-handle encoding — the warning still applies, just to a different mechanism.
+
+## Critical subtlety: descriptor build order is not declaration order
+
+Same principle as the original legacy-oriented guidance, ported to the new mechanism: `ReplicationStateDescriptorBuilder`'s traversal determines actual wire layout, and it is not guaranteed to match raw `UPROPERTY` order (custom-`NetSerializer` members, conditionally-replicated members, and fast-array members may be grouped/reordered). **Do not hardcode a fixed bit-schema per class from the SDK's declared property order alone.**
+
+1. Reimplement `ReplicationStateDescriptorBuilder`'s traversal directly.
+2. Use this reimplementation to compute, for each class in your Phase 4 SDK cross-reference database, the actual expected descriptor layout — this becomes your per-class schema.
+3. Cross-check: does the state/member order you observe in real files match your reimplementation's prediction? Agreement here is strong evidence of correctness — same validation logic as the original doc, just pointed at the Iris mechanism.
+
+## Conditional properties
+
+Iris has its own conditional-replication concept; do not assume `COND_*` values and semantics port 1:1 from legacy without checking Iris's own filtering/condition source. The high-level guidance from the original doc still holds: for a given object across a recording, the *set* of properties that could ever appear is fixed by conditions, while *which* changed-properties actually appear per update is separately gated by the dirty-state mechanism above — don't conflate "not sent because unchanged" with "not sent because condition excluded it," same distinction as before, just re-derive the actual condition enum/mechanism from Iris source rather than assuming legacy's `ELifetimeCondition` values map unchanged.
+
+## Type-specific deserialization
+
+For each resolved property, deserialize according to its SDK-reported type and its registered Iris `NetSerializer` (not a legacy `NetSerialize` member function):
+
+- **Primitives** (`bool`, `int32`, `float`, `uint8` enums): confirm bit-width and any range-compaction from the relevant built-in `NetSerializer` source, not assumed to match legacy's `SerializeInt` behavior byte-for-byte even if conceptually similar.
+- **`FVector`/`FRotator` and quantized variants**: Iris ships its own quantized vector/rotator `NetSerializer`s — locate and port the exact serializer for each variant your Phase 4 SDK cross-reference flagged as in-use. Do not assume Iris's quantization constants match legacy's `FVector_NetQuantize100`-family constants even if the type names look similar — verify each one's bit-width from the Iris serializer source directly.
+- **Structs with custom serialization**: for engine built-ins, source is available — port the Iris `NetSerializer` directly. For any **game-custom struct**, there's no source — reverse it from the executable. Under Iris, look specifically for `NetSerializer` registration patterns compiled into the binary (registration macros/tables) rather than a `bool NetSerialize(FArchive&, ...)` member function signature, since that's what to search for in disassembly/strings.
+- **`TArray` of plain properties**: check Iris's array-state serialization (likely still a count-prefixed element loop, but confirm the count encoding from Iris source rather than assuming it matches legacy's).
+- **Fast-array-equivalent delta types**: if TYR uses `FFastArraySerializer`-derived types, confirm whether Iris replicates them through its own native array/dynamic-state delta mechanism or continues to route through a compatibility shim for `FFastArraySerializer` specifically (both are plausible depending on how the game's structs are declared) — verify from source before implementing, since the delta-key bookkeeping scheme may differ from legacy's.
+
+## Validation
+
+1. **Full-payload consumption**: unchanged in principle — after all states for an object are consumed, bits consumed should exactly match the payload's declared length from Phase 5. Hard assertion.
+2. **Descriptor-order cross-validation**: compare your `ReplicationStateDescriptorBuilder` reimplementation's predicted layout against the empirically observed wire order across many real payloads for the same class — same check as the legacy doc's send-order cross-validation, retargeted.
+3. **Type plausibility per property**: unchanged — sanity-check decoded values against semantic meaning inferable from name/type (health in a plausible range, position within level bounds, etc.).
+4. **Temporal coherence check**: unchanged — a position-like property's values over time for one object should look smooth, not erratic.
+5. **Static cross-check (no live debugging available)**: per Step 0.3 (revised), there's no live session to breakpoint `ReplicationReader`/`ReplicationWriter`. Substitute: statically disassemble the relevant compiled functions for a representative class or two and hand-trace against real payload bytes from your sample files, cross-checking against your source-based reimplementation. Where you have a simple, unambiguous real-world signal (e.g., a position value that should be within known level bounds), treat agreement with that external plausibility signal as corroborating evidence in place of a live diff.
+6. **Delta-array-specific validation (if applicable)**: construct as controlled a scenario as you can from real sample files (find a sequence where an inventory/status-effect-like array visibly changes across consecutive frames) and confirm your decoder produces a coherent add/modify/remove sequence — you can't stage a live controlled scenario without a running session, so rely on finding a naturally-occurring one in the samples instead, and document it as your test fixture.
+
+## Deliverables checklist
+
+- [ ] `ReplicationStateDescriptorBuilder` traversal reimplemented and cross-validated against observed wire order.
+- [ ] Dirty-state/changed-member signaling mechanism implemented (Iris's replacement for the legacy field-handle delta loop) — confirmed from source, not assumed to mirror legacy.
+- [ ] Primitive type deserialization implemented for all types observed in the SDK's replicated property set, via their registered Iris `NetSerializer`s.
+- [ ] Quantized vector/rotator Iris `NetSerializer` variants ported for every variant in use, with constants confirmed from Iris source (not assumed to match legacy).
+- [ ] Plain array replication implemented per Iris's array-state serialization.
+- [ ] Delta-array-equivalent replication implemented and tested against a naturally-occurring add/modify/remove sequence found in the sample files.
+- [ ] Any game-custom `NetSerializer` structs identified and reverse-engineered from the executable.
+- [ ] Full-payload bit consumption assertion passing across all 10 files.
+- [ ] Temporal coherence check passing for at least position/rotation-like properties.
+- [ ] At least one static cross-check (no live debugging available) of the descriptor/reader logic, documented per Step 0.3 (revised).
+
+## Suggested commit breakdown
+
+Largest phase — split aggressively, validate incrementally per type:
+
+1. `feat(phase06): reimplement ReplicationStateDescriptorBuilder traversal` — do this first; everything else depends on knowing the correct per-class schema.
+2. `test(phase06): cross-validate descriptor order against observed wire sequence` — dedicated commit, since you'll likely iterate as edge cases surface.
+3. `feat(phase06): implement dirty-state/changed-member signaling decode` — confirmed from `ReplicationReader.cpp` source, the Iris replacement for the legacy handle-delta loop.
+4. `feat(phase06): implement primitive type deserialization via Iris NetSerializers` — bools, ints, floats, small enums.
+5. `feat(phase06): port quantized vector/rotator Iris NetSerializer variants` — one commit per distinct variant if bit-widths/logic differ meaningfully, confirmed against Iris source (not legacy constants).
+6. `feat(phase06): implement plain array replication` — per Iris's array-state serialization.
+7. `feat(phase06): implement delta-array-equivalent replication` — the add/modify/remove delta mechanism, whichever Iris path it turns out to be (native or `FFastArraySerializer` shim).
+8. `test(phase06): naturally-occurring add/modify/remove scenario for delta arrays` — since no controlled live scenario is possible, find and document a real occurrence in the sample files as the test fixture.
+9. `feat(phase06): reverse-engineer and implement game-custom NetSerializer <name>` — one commit per custom struct, each with disassembly notes, the reimplementation, and a static cross-check note.
+10. `test(phase06): full-payload consumption + temporal coherence checks` — the two hard/soft automated checks across all 10 files.
+11. `docs(phase06): static cross-check of descriptor/reader logic` — no live debugging is available on this project; commit disassembly-based notes in place of a live value-by-value diff, per Step 0.3 (revised).
+
+Proceed to `07-rpcs.md`.

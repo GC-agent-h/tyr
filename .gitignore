@@ -1,0 +1,7 @@
+# Generated artifacts (produced by tools/ scripts); force-add specific
+# outputs that must ship with a fresh clone (e.g. resolved maps) via
+# `git add -f <path>` when regenerating them.
+out/
+__pycache__/
+*.pyc
+.DS_Store
