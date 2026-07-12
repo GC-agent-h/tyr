@@ -48,7 +48,7 @@ This file is the single source of truth for project status. Update it **every ti
 | 01 — Outer Container Format | ✅ Done (validated + merged + tagged) | `master` @ `phase01-complete` | 2026-07-12 |
 | 02 — Demo Header | ✅ Done (validated + merged + tagged) | `master` @ `phase02-complete` | 2026-07-12 |
 | 03 — Bit-Level Primitives | ✅ Done (validated + merged + tagged) | `master` @ `phase03-complete` | 2026-07-12 |
-| 04 — Iris NetRefHandle / Replication Protocol Descriptors | 🟨 In progress | master @ ba29257 | 2026-07-12 |
+| 04 — Iris NetRefHandle / Replication Protocol Descriptors | ✅ Done (validated + merged + tagged) | `master` @ `phase04-complete` | 2026-07-13 |
 | 05 — Bunches & Channels | ⬜ Not started | | |
 | 06 — Property Replication | ⬜ Not started | | |
 | 07 — RPCs | ⬜ Not started | | |
