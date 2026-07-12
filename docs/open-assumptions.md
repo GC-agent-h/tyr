@@ -35,3 +35,23 @@ evidence), `UNKNOWN` (insufficient evidence — acceptable).
 - **To resolve:** Phase 01 must read and assert the `bCompressed` flag across
   all 10 sample files; if any file reports compressed, this assumption is
   falsified and decompression support must be built.
+
+## OA-04-1 — Cannot recompute exact CityHash32 `FReplicationProtocolIdentifier` from SDK alone
+- **Status:** CANDIDATE (source-confirmed mechanism; exact constants unavailable)
+- **Evidence:** `ReplicationProtocolManager.cpp:170-184` — the 32-bit
+  `FReplicationProtocolIdentifier` is `CityHash32` over the per-descriptor
+  `FReplicationStateDescriptor::DescriptorIdentifier (Value, DefaultStateHash)` pairs.
+  Those `DescriptorIdentifier` constants are compiled into the running binary and are
+  NOT present in the Dumper-7 SDK dump, so we cannot reproduce the exact hash value from
+  the SDK reflection we have.
+- **Why this is fine for the parser:** Iris sends only the 32-bit hash on the wire and
+  rebuilds the descriptor locally on the remote side (`ObjectReplicationBridge.cpp
+  :1681-1709`), so the replay parser likewise rebuilds the descriptor from the resolved
+  class via SDK reflection — it never needs to invert the hash. We validate the rebuild
+  via determinism + cross-file consistency + 100% SDK class-match (see
+  `docs/phase04-static-crosscheck.md`). The exact `ProtocolId↔descriptor` binding will
+  be confirmed once Phase 05 recovers the real 32-bit ids from creation headers.
+- **To resolve (later):** when Phase 05 decodes creation headers, assert the observed
+  32-bit id is stable per class across files and matches the class the descriptor was
+  rebuilt for. If needed, the binary's `DescriptorIdentifier` table can be recovered
+  statically (Step 0.3 #2 disassembly) to recompute the exact hash as a redundant check.
