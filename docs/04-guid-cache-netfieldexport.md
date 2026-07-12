@@ -56,7 +56,7 @@ Build this as a normalized, queryable data structure exactly as the original pha
 - [x] `NetRefHandleCache` implemented and populated via streaming pass, with static/dynamic distinction confirmed from Iris source (not assumed to mirror legacy).
       - Sub-step 1 (static path-name resolution): DONE — `consume_net_token_export_stream` + token store + static handle binding.
       - Sub-step 2 (dynamic spawn-info resolution): DONE — `read_net_object_reference` (ObjectReferenceCache.cpp:1524) + `observe_object_reference` (even-Id dynamic handle + inline path token WITHOUT TypeId on wire + recursive outer chain). Real-evidence validated on 7/10 replays (41 clean decodes of genuine Tyr object paths).
-- [ ] `FNetToken` store cache implemented for path/name resolution.
+- [x] `FNetToken` store cache implemented for path/name resolution. `iris_net_token_store.py::NetTokenStoreCache` — typed stores (TypeId 0..7, per NetToken.h:32,37), (TypeId,Index)->payload resolution mirroring FNetTokenStoreState, import via UNetTokenDataStream::ReadData (NetTokenDataStream.cpp:194). Real-evidence validated across replays (genuine Tyr subsystem/Blueprint paths resolved with correct two-dimensional keys).
 - [ ] Replication protocol/descriptor schema cache implemented, keyed by class, populated via streaming pass.
 - [ ] SDK cross-reference database built (ClassName → PropertyName → {offset, type, arrayDim, customSerializeKind}), including Iris `NetSerializer` identification (not legacy `NetSerialize` detection).
 - [ ] 100% (or explained near-100%) class-name match rate against the SDK across all 10 files.

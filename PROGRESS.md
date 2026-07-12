@@ -162,7 +162,7 @@ Phase-02 byte-exact consumption + Phase-03 re-validation. Tracked as OA-03-1 in
 
 - [x] `NetRefHandleCache` implemented (sub-step 1: static path-name resolution via NetToken export stream) — validated against real replays
 - [x] `NetRefHandleCache` dynamic spawn-info resolution (sub-step 2: `read_net_object_reference` + `observe_object_reference`, even-Id dynamic handles + inline path token + recursive outer) — validated on 7/10 replays (41 clean decodes)
-- [ ] `FNetToken` store cache implemented for path/name resolution
+- [x] `FNetToken` store cache (sub-step 3: `iris_net_token_store.NetTokenStoreCache`, typed (TypeId,Index)->payload, import via export stream) — validated against real replays
 - [ ] Replication protocol/descriptor schema cache implemented, streaming pass
 - [ ] SDK cross-reference database built (class → property/function → metadata, incl. Iris `NetSerializer` tagging)
 - [ ] 100% (or explained) SDK class-name match rate across all 10 files
@@ -172,7 +172,7 @@ Phase-02 byte-exact consumption + Phase-03 re-validation. Tracked as OA-03-1 in
 **Commits:**
 - [x] `feat(phase04): implement NetRefHandleCache with static path-name resolution`
 - [x] `feat(phase04): add dynamic NetRefHandle resolution (spawn-info path)`
-- [ ] `feat(phase04): implement FNetToken store cache`
+- [x] `feat(phase04): implement FNetToken store cache`
 - [ ] `feat(phase04): implement replication protocol/descriptor schema cache`
 - [ ] `feat(phase04): build SDK cross-reference database (properties + functions, incl. NetSerializer detection)`
 - [ ] `test(phase04): SDK coverage metric report across 10 samples`
