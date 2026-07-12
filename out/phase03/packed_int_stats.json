@@ -1,0 +1,10 @@
+{
+  "files": 10,
+  "decoded_values": 1988784,
+  "median": 32.0,
+  "min": 0,
+  "max": 34359738367,
+  "frac_ge_2pow28": 0.016338124200516498,
+  "negative_count": 0,
+  "note": "INFORMATIONAL ONLY: ReplayData is mixed-content bit-packed bunch data, not a pure SerializeIntPacked corpus; authoritative decoder correctness is from hand-vector/round-trip/Phase-2 re-validation. Negative count is the only hard gate."
+}
