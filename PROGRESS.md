@@ -48,7 +48,7 @@ This file is the single source of truth for project status. Update it **every ti
 | 01 — Outer Container Format | ✅ Done (validated + merged + tagged) | `master` @ `phase01-complete` | 2026-07-12 |
 | 02 — Demo Header | ✅ Done (validated + merged + tagged) | `master` @ `phase02-complete` | 2026-07-12 |
 | 03 — Bit-Level Primitives | ✅ Done (validated + merged + tagged) | `master` @ `phase03-complete` | 2026-07-12 |
-| 04 — Iris NetRefHandle / Replication Protocol Descriptors | ⬜ Not started | | |
+| 04 — Iris NetRefHandle / Replication Protocol Descriptors | 🟨 In progress | master @ ba29257 | 2026-07-12 |
 | 05 — Bunches & Channels | ⬜ Not started | | |
 | 06 — Property Replication | ⬜ Not started | | |
 | 07 — RPCs | ⬜ Not started | | |
@@ -160,7 +160,7 @@ Phase-02 byte-exact consumption + Phase-03 re-validation. Tracked as OA-03-1 in
 
 > Rewritten for Iris — see updated `04-guid-cache-netfieldexport.md`.
 
-- [ ] `NetRefHandleCache` implemented (static + dynamic resolution), streaming pass
+- [x] `NetRefHandleCache` implemented (static + dynamic resolution), streaming pass
 - [ ] `FNetToken` store cache implemented for path/name resolution
 - [ ] Replication protocol/descriptor schema cache implemented, streaming pass
 - [ ] SDK cross-reference database built (class → property/function → metadata, incl. Iris `NetSerializer` tagging)
