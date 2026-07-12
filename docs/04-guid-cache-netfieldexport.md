@@ -53,7 +53,9 @@ Build this as a normalized, queryable data structure exactly as the original pha
 
 ## Deliverables checklist
 
-- [ ] `NetRefHandleCache` implemented and populated via streaming pass, with static/dynamic distinction confirmed from Iris source (not assumed to mirror legacy).
+- [x] `NetRefHandleCache` implemented and populated via streaming pass, with static/dynamic distinction confirmed from Iris source (not assumed to mirror legacy).
+      - Sub-step 1 (static path-name resolution): DONE — `consume_net_token_export_stream` + token store + static handle binding.
+      - Sub-step 2 (dynamic spawn-info resolution): DONE — `read_net_object_reference` (ObjectReferenceCache.cpp:1524) + `observe_object_reference` (even-Id dynamic handle + inline path token WITHOUT TypeId on wire + recursive outer chain). Real-evidence validated on 7/10 replays (41 clean decodes of genuine Tyr object paths).
 - [ ] `FNetToken` store cache implemented for path/name resolution.
 - [ ] Replication protocol/descriptor schema cache implemented, keyed by class, populated via streaming pass.
 - [ ] SDK cross-reference database built (ClassName → PropertyName → {offset, type, arrayDim, customSerializeKind}), including Iris `NetSerializer` identification (not legacy `NetSerialize` detection).

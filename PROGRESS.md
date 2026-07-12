@@ -160,7 +160,8 @@ Phase-02 byte-exact consumption + Phase-03 re-validation. Tracked as OA-03-1 in
 
 > Rewritten for Iris — see updated `04-guid-cache-netfieldexport.md`.
 
-- [x] `NetRefHandleCache` implemented (static + dynamic resolution), streaming pass
+- [x] `NetRefHandleCache` implemented (sub-step 1: static path-name resolution via NetToken export stream) — validated against real replays
+- [x] `NetRefHandleCache` dynamic spawn-info resolution (sub-step 2: `read_net_object_reference` + `observe_object_reference`, even-Id dynamic handles + inline path token + recursive outer) — validated on 7/10 replays (41 clean decodes)
 - [ ] `FNetToken` store cache implemented for path/name resolution
 - [ ] Replication protocol/descriptor schema cache implemented, streaming pass
 - [ ] SDK cross-reference database built (class → property/function → metadata, incl. Iris `NetSerializer` tagging)
@@ -169,8 +170,8 @@ Phase-02 byte-exact consumption + Phase-03 re-validation. Tracked as OA-03-1 in
 - [ ] Static cross-check (no live debugging available) of NetRefHandle resolution / protocol descriptors
 
 **Commits:**
-- [ ] `feat(phase04): implement NetRefHandleCache with static path-name resolution`
-- [ ] `feat(phase04): add dynamic NetRefHandle resolution (spawn-info path)`
+- [x] `feat(phase04): implement NetRefHandleCache with static path-name resolution`
+- [x] `feat(phase04): add dynamic NetRefHandle resolution (spawn-info path)`
 - [ ] `feat(phase04): implement FNetToken store cache`
 - [ ] `feat(phase04): implement replication protocol/descriptor schema cache`
 - [ ] `feat(phase04): build SDK cross-reference database (properties + functions, incl. NetSerializer detection)`
