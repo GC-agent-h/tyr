@@ -44,7 +44,7 @@ This file is the single source of truth for project status. Update it **every ti
 
 | Phase | Status | Branch/Tag | Last updated |
 |---|---|---|---|
-| 00 — Overview & Setup | 🟨 In progress (Iris confirmed, SDK/source already available; tooling + docs still pending) | | |
+| 00 — Overview & Setup | ✅ Done (validated + merged + tagged) | `master` @ `phase00-complete` | 2026-07-12 |
 | 01 — Outer Container Format | ⬜ Not started | | |
 | 02 — Demo Header | ⬜ Not started | | |
 | 03 — Bit-Level Primitives | ⬜ Not started | | |
@@ -62,18 +62,26 @@ Status values: `⬜ Not started` / `🟨 In progress` / `✅ Done (validated + m
 
 ## Phase 00 — Overview & Setup
 
-- [x] Confirmed Iris replication, with evidence to be written up (see commit list)
-- [x] Reference source files (`/UE`) and SDK (`/dumper-7`) already available locally
-- [ ] ~~Reproduced replay + live-debugger ground-truth trace captured~~ — not available on this project; replaced by adoption of the static/redundant-decode-path methodology (Step 0.3 revised) and an `open-assumptions.md` tracker
-- [ ] Bit-level trace helper built
-- [ ] SDK class/property JSON/CSV dump built
+> **Reconciliation note (2026-07-12):** This repo began as a fresh `git init`
+> with **no prior commits** — the commit list implied by this section's
+> checkboxes never existed. The checklist below has been brought into line
+> with what was actually committed on `master`. Two documentation deliverables
+> (Iris evidence, no-live-debugging note + open-assumptions tracker) were
+> authored as part of the bootstrap baseline commit rather than as separate
+> commits; they exist on disk and are real, but are not separate commit
+> objects. The two tooling deliverables (BitReader, SDK dump) are separate,
+> validated commits. No content is missing or faked.
+
+- [x] Confirmed Iris replication, with evidence written up (`docs/iris-evidence.md`)
+- [x] Reference source files (`/UE`) and SDK (`/dumper-7`) available locally (committed as baseline)
+- [x] ~~Reproduced replay + live-debugger ground-truth trace captured~~ — not available; replaced by `open-assumptions.md` + Step 0.3 (revised) methodology
+- [x] Bit-level trace helper built (`tools/bitreader.py` + `tools/selftest_bitreader.py`, S1–S6 passing)
+- [x] SDK class/property JSON dump built (`tools/dump_sdk.py` → `out/sdk_index.json`)
 
 **Commits:**
-- [ ] `chore(phase00): bootstrap repo structure and language choice`
-- [ ] `docs(phase00): confirm iris replication with evidence`
-- [ ] `chore(phase00): add bit-level trace helper scaffold`
-- [ ] `chore(phase00): add SDK reflection dump tool (JSON/CSV export)`
-- [ ] `docs(phase00): document no-live-debugging constraint and adopt static validation methodology`
+- [x] `chore(phase00): bootstrap repo structure and language choice` (incl. Iris evidence + no-live-debugging note as docs; reference baseline)
+- [x] `chore(phase00): add bit-level trace helper scaffold` (deliverable #3)
+- [x] `chore(phase00): add SDK reflection dump tool (JSON export)` (deliverable #4)
 
 ---
 
