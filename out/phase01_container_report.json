@@ -1,0 +1,2428 @@
+[
+  {
+    "file": "TyrReplay1.replay",
+    "file_size": 5114730,
+    "magic": "0x1ca2e27f",
+    "file_version": 7,
+    "serialization_version": 7,
+    "custom_versions": [
+      {
+        "guid": "3ef0a495e4490b7e56d343bad987ff94",
+        "version": 7
+      }
+    ],
+    "length_in_ms": 201393,
+    "network_version": 337258096,
+    "changelist": 31351,
+    "friendly_name": "                                                                                                                                                                                                                                                                \u0000",
+    "is_live": false,
+    "timestamp_ticks": 639182069142910000,
+    "timestamp_iso": "2026-06-28T01:28:34.291000+00:00",
+    "b_compressed": false,
+    "b_encrypted": false,
+    "encryption_key_len": 0,
+    "header_end_offset": 586,
+    "reached_eof": true,
+    "chunks": [
+      {
+        "index": 0,
+        "type": "Header",
+        "type_offset": 586,
+        "data_offset": 594,
+        "size_in_bytes": 226
+      },
+      {
+        "index": 1,
+        "type": "ReplayData",
+        "type_offset": 820,
+        "data_offset": 828,
+        "size_in_bytes": 307775
+      },
+      {
+        "index": 2,
+        "type": "ReplayData",
+        "type_offset": 308603,
+        "data_offset": 308611,
+        "size_in_bytes": 160816
+      },
+      {
+        "index": 3,
+        "type": "Checkpoint",
+        "type_offset": 469427,
+        "data_offset": 469435,
+        "size_in_bytes": 75798
+      },
+      {
+        "index": 4,
+        "type": "ReplayData",
+        "type_offset": 545233,
+        "data_offset": 545241,
+        "size_in_bytes": 353568
+      },
+      {
+        "index": 5,
+        "type": "ReplayData",
+        "type_offset": 898809,
+        "data_offset": 898817,
+        "size_in_bytes": 203164
+      },
+      {
+        "index": 6,
+        "type": "Checkpoint",
+        "type_offset": 1101981,
+        "data_offset": 1101989,
+        "size_in_bytes": 84171
+      },
+      {
+        "index": 7,
+        "type": "ReplayData",
+        "type_offset": 1186160,
+        "data_offset": 1186168,
+        "size_in_bytes": 473353
+      },
+      {
+        "index": 8,
+        "type": "ReplayData",
+        "type_offset": 1659521,
+        "data_offset": 1659529,
+        "size_in_bytes": 343278
+      },
+      {
+        "index": 9,
+        "type": "Checkpoint",
+        "type_offset": 2002807,
+        "data_offset": 2002815,
+        "size_in_bytes": 112442
+      },
+      {
+        "index": 10,
+        "type": "ReplayData",
+        "type_offset": 2115257,
+        "data_offset": 2115265,
+        "size_in_bytes": 451206
+      },
+      {
+        "index": 11,
+        "type": "ReplayData",
+        "type_offset": 2566471,
+        "data_offset": 2566479,
+        "size_in_bytes": 241650
+      },
+      {
+        "index": 12,
+        "type": "Checkpoint",
+        "type_offset": 2808129,
+        "data_offset": 2808137,
+        "size_in_bytes": 117050
+      },
+      {
+        "index": 13,
+        "type": "ReplayData",
+        "type_offset": 2925187,
+        "data_offset": 2925195,
+        "size_in_bytes": 482851
+      },
+      {
+        "index": 14,
+        "type": "ReplayData",
+        "type_offset": 3408046,
+        "data_offset": 3408054,
+        "size_in_bytes": 240689
+      },
+      {
+        "index": 15,
+        "type": "Checkpoint",
+        "type_offset": 3648743,
+        "data_offset": 3648751,
+        "size_in_bytes": 120270
+      },
+      {
+        "index": 16,
+        "type": "ReplayData",
+        "type_offset": 3769021,
+        "data_offset": 3769029,
+        "size_in_bytes": 470489
+      },
+      {
+        "index": 17,
+        "type": "ReplayData",
+        "type_offset": 4239518,
+        "data_offset": 4239526,
+        "size_in_bytes": 230430
+      },
+      {
+        "index": 18,
+        "type": "Checkpoint",
+        "type_offset": 4469956,
+        "data_offset": 4469964,
+        "size_in_bytes": 124018
+      },
+      {
+        "index": 19,
+        "type": "ReplayData",
+        "type_offset": 4593982,
+        "data_offset": 4593990,
+        "size_in_bytes": 498624
+      },
+      {
+        "index": 20,
+        "type": "ReplayData",
+        "type_offset": 5092614,
+        "data_offset": 5092622,
+        "size_in_bytes": 22108
+      }
+    ]
+  },
+  {
+    "file": "TyrReplay10.replay",
+    "file_size": 6196996,
+    "magic": "0x1ca2e27f",
+    "file_version": 7,
+    "serialization_version": 7,
+    "custom_versions": [
+      {
+        "guid": "3ef0a495e4490b7e56d343bad987ff94",
+        "version": 7
+      }
+    ],
+    "length_in_ms": 207780,
+    "network_version": 337258096,
+    "changelist": 31351,
+    "friendly_name": "                                                                                                                                                                                                                                                                \u0000",
+    "is_live": false,
+    "timestamp_ticks": 639182065762040000,
+    "timestamp_iso": "2026-06-28T01:22:56.204000+00:00",
+    "b_compressed": false,
+    "b_encrypted": false,
+    "encryption_key_len": 0,
+    "header_end_offset": 586,
+    "reached_eof": true,
+    "chunks": [
+      {
+        "index": 0,
+        "type": "Header",
+        "type_offset": 586,
+        "data_offset": 594,
+        "size_in_bytes": 226
+      },
+      {
+        "index": 1,
+        "type": "ReplayData",
+        "type_offset": 820,
+        "data_offset": 828,
+        "size_in_bytes": 402042
+      },
+      {
+        "index": 2,
+        "type": "ReplayData",
+        "type_offset": 402870,
+        "data_offset": 402878,
+        "size_in_bytes": 188706
+      },
+      {
+        "index": 3,
+        "type": "Checkpoint",
+        "type_offset": 591584,
+        "data_offset": 591592,
+        "size_in_bytes": 127497
+      },
+      {
+        "index": 4,
+        "type": "ReplayData",
+        "type_offset": 719089,
+        "data_offset": 719097,
+        "size_in_bytes": 451575
+      },
+      {
+        "index": 5,
+        "type": "ReplayData",
+        "type_offset": 1170672,
+        "data_offset": 1170680,
+        "size_in_bytes": 328458
+      },
+      {
+        "index": 6,
+        "type": "Checkpoint",
+        "type_offset": 1499138,
+        "data_offset": 1499146,
+        "size_in_bytes": 149623
+      },
+      {
+        "index": 7,
+        "type": "ReplayData",
+        "type_offset": 1648769,
+        "data_offset": 1648777,
+        "size_in_bytes": 510115
+      },
+      {
+        "index": 8,
+        "type": "ReplayData",
+        "type_offset": 2158892,
+        "data_offset": 2158900,
+        "size_in_bytes": 220002
+      },
+      {
+        "index": 9,
+        "type": "Checkpoint",
+        "type_offset": 2378902,
+        "data_offset": 2378910,
+        "size_in_bytes": 161062
+      },
+      {
+        "index": 10,
+        "type": "ReplayData",
+        "type_offset": 2539972,
+        "data_offset": 2539980,
+        "size_in_bytes": 584855
+      },
+      {
+        "index": 11,
+        "type": "ReplayData",
+        "type_offset": 3124835,
+        "data_offset": 3124843,
+        "size_in_bytes": 261891
+      },
+      {
+        "index": 12,
+        "type": "Checkpoint",
+        "type_offset": 3386734,
+        "data_offset": 3386742,
+        "size_in_bytes": 172120
+      },
+      {
+        "index": 13,
+        "type": "ReplayData",
+        "type_offset": 3558862,
+        "data_offset": 3558870,
+        "size_in_bytes": 681132
+      },
+      {
+        "index": 14,
+        "type": "ReplayData",
+        "type_offset": 4240002,
+        "data_offset": 4240010,
+        "size_in_bytes": 297752
+      },
+      {
+        "index": 15,
+        "type": "Checkpoint",
+        "type_offset": 4537762,
+        "data_offset": 4537770,
+        "size_in_bytes": 184776
+      },
+      {
+        "index": 16,
+        "type": "ReplayData",
+        "type_offset": 4722546,
+        "data_offset": 4722554,
+        "size_in_bytes": 528652
+      },
+      {
+        "index": 17,
+        "type": "ReplayData",
+        "type_offset": 5251206,
+        "data_offset": 5251214,
+        "size_in_bytes": 260462
+      },
+      {
+        "index": 18,
+        "type": "Checkpoint",
+        "type_offset": 5511676,
+        "data_offset": 5511684,
+        "size_in_bytes": 188768
+      },
+      {
+        "index": 19,
+        "type": "ReplayData",
+        "type_offset": 5700452,
+        "data_offset": 5700460,
+        "size_in_bytes": 371525
+      },
+      {
+        "index": 20,
+        "type": "ReplayData",
+        "type_offset": 6071985,
+        "data_offset": 6071993,
+        "size_in_bytes": 125003
+      }
+    ]
+  },
+  {
+    "file": "TyrReplay2.replay",
+    "file_size": 3492994,
+    "magic": "0x1ca2e27f",
+    "file_version": 7,
+    "serialization_version": 7,
+    "custom_versions": [
+      {
+        "guid": "3ef0a495e4490b7e56d343bad987ff94",
+        "version": 7
+      }
+    ],
+    "length_in_ms": 140447,
+    "network_version": 337258096,
+    "changelist": 31351,
+    "friendly_name": "                                                                                                                                                                                                                                                                \u0000",
+    "is_live": false,
+    "timestamp_ticks": 639182072304030000,
+    "timestamp_iso": "2026-06-28T01:33:50.403000+00:00",
+    "b_compressed": false,
+    "b_encrypted": false,
+    "encryption_key_len": 0,
+    "header_end_offset": 586,
+    "reached_eof": true,
+    "chunks": [
+      {
+        "index": 0,
+        "type": "Header",
+        "type_offset": 586,
+        "data_offset": 594,
+        "size_in_bytes": 234
+      },
+      {
+        "index": 1,
+        "type": "ReplayData",
+        "type_offset": 828,
+        "data_offset": 836,
+        "size_in_bytes": 313027
+      },
+      {
+        "index": 2,
+        "type": "ReplayData",
+        "type_offset": 313863,
+        "data_offset": 313871,
+        "size_in_bytes": 122947
+      },
+      {
+        "index": 3,
+        "type": "Checkpoint",
+        "type_offset": 436818,
+        "data_offset": 436826,
+        "size_in_bytes": 92438
+      },
+      {
+        "index": 4,
+        "type": "ReplayData",
+        "type_offset": 529264,
+        "data_offset": 529272,
+        "size_in_bytes": 355754
+      },
+      {
+        "index": 5,
+        "type": "ReplayData",
+        "type_offset": 885026,
+        "data_offset": 885034,
+        "size_in_bytes": 199621
+      },
+      {
+        "index": 6,
+        "type": "Checkpoint",
+        "type_offset": 1084655,
+        "data_offset": 1084663,
+        "size_in_bytes": 107374
+      },
+      {
+        "index": 7,
+        "type": "ReplayData",
+        "type_offset": 1192037,
+        "data_offset": 1192045,
+        "size_in_bytes": 431787
+      },
+      {
+        "index": 8,
+        "type": "ReplayData",
+        "type_offset": 1623832,
+        "data_offset": 1623840,
+        "size_in_bytes": 325733
+      },
+      {
+        "index": 9,
+        "type": "Checkpoint",
+        "type_offset": 1949573,
+        "data_offset": 1949581,
+        "size_in_bytes": 130808
+      },
+      {
+        "index": 10,
+        "type": "ReplayData",
+        "type_offset": 2080389,
+        "data_offset": 2080397,
+        "size_in_bytes": 463597
+      },
+      {
+        "index": 11,
+        "type": "ReplayData",
+        "type_offset": 2543994,
+        "data_offset": 2544002,
+        "size_in_bytes": 268486
+      },
+      {
+        "index": 12,
+        "type": "Checkpoint",
+        "type_offset": 2812488,
+        "data_offset": 2812496,
+        "size_in_bytes": 138073
+      },
+      {
+        "index": 13,
+        "type": "ReplayData",
+        "type_offset": 2950569,
+        "data_offset": 2950577,
+        "size_in_bytes": 532083
+      },
+      {
+        "index": 14,
+        "type": "ReplayData",
+        "type_offset": 3482660,
+        "data_offset": 3482668,
+        "size_in_bytes": 10326
+      }
+    ]
+  },
+  {
+    "file": "TyrReplay3.replay",
+    "file_size": 8378846,
+    "magic": "0x1ca2e27f",
+    "file_version": 7,
+    "serialization_version": 7,
+    "custom_versions": [
+      {
+        "guid": "3ef0a495e4490b7e56d343bad987ff94",
+        "version": 7
+      }
+    ],
+    "length_in_ms": 359988,
+    "network_version": 337258096,
+    "changelist": 31351,
+    "friendly_name": "                                                                                                                                                                                                                                                                \u0000",
+    "is_live": false,
+    "timestamp_ticks": 639182074968880000,
+    "timestamp_iso": "2026-06-28T01:38:16.888000+00:00",
+    "b_compressed": false,
+    "b_encrypted": false,
+    "encryption_key_len": 0,
+    "header_end_offset": 586,
+    "reached_eof": true,
+    "chunks": [
+      {
+        "index": 0,
+        "type": "Header",
+        "type_offset": 586,
+        "data_offset": 594,
+        "size_in_bytes": 234
+      },
+      {
+        "index": 1,
+        "type": "ReplayData",
+        "type_offset": 828,
+        "data_offset": 836,
+        "size_in_bytes": 336507
+      },
+      {
+        "index": 2,
+        "type": "ReplayData",
+        "type_offset": 337343,
+        "data_offset": 337351,
+        "size_in_bytes": 161681
+      },
+      {
+        "index": 3,
+        "type": "Checkpoint",
+        "type_offset": 499032,
+        "data_offset": 499040,
+        "size_in_bytes": 91531
+      },
+      {
+        "index": 4,
+        "type": "ReplayData",
+        "type_offset": 590571,
+        "data_offset": 590579,
+        "size_in_bytes": 346060
+      },
+      {
+        "index": 5,
+        "type": "ReplayData",
+        "type_offset": 936639,
+        "data_offset": 936647,
+        "size_in_bytes": 189778
+      },
+      {
+        "index": 6,
+        "type": "Checkpoint",
+        "type_offset": 1126425,
+        "data_offset": 1126433,
+        "size_in_bytes": 98580
+      },
+      {
+        "index": 7,
+        "type": "ReplayData",
+        "type_offset": 1225013,
+        "data_offset": 1225021,
+        "size_in_bytes": 431460
+      },
+      {
+        "index": 8,
+        "type": "ReplayData",
+        "type_offset": 1656481,
+        "data_offset": 1656489,
+        "size_in_bytes": 238066
+      },
+      {
+        "index": 9,
+        "type": "Checkpoint",
+        "type_offset": 1894555,
+        "data_offset": 1894563,
+        "size_in_bytes": 118105
+      },
+      {
+        "index": 10,
+        "type": "ReplayData",
+        "type_offset": 2012668,
+        "data_offset": 2012676,
+        "size_in_bytes": 481024
+      },
+      {
+        "index": 11,
+        "type": "ReplayData",
+        "type_offset": 2493700,
+        "data_offset": 2493708,
+        "size_in_bytes": 238590
+      },
+      {
+        "index": 12,
+        "type": "Checkpoint",
+        "type_offset": 2732298,
+        "data_offset": 2732306,
+        "size_in_bytes": 124930
+      },
+      {
+        "index": 13,
+        "type": "ReplayData",
+        "type_offset": 2857236,
+        "data_offset": 2857244,
+        "size_in_bytes": 454699
+      },
+      {
+        "index": 14,
+        "type": "ReplayData",
+        "type_offset": 3311943,
+        "data_offset": 3311951,
+        "size_in_bytes": 238167
+      },
+      {
+        "index": 15,
+        "type": "Checkpoint",
+        "type_offset": 3550118,
+        "data_offset": 3550126,
+        "size_in_bytes": 128989
+      },
+      {
+        "index": 16,
+        "type": "ReplayData",
+        "type_offset": 3679115,
+        "data_offset": 3679123,
+        "size_in_bytes": 456516
+      },
+      {
+        "index": 17,
+        "type": "ReplayData",
+        "type_offset": 4135639,
+        "data_offset": 4135647,
+        "size_in_bytes": 273836
+      },
+      {
+        "index": 18,
+        "type": "Checkpoint",
+        "type_offset": 4409483,
+        "data_offset": 4409491,
+        "size_in_bytes": 133374
+      },
+      {
+        "index": 19,
+        "type": "ReplayData",
+        "type_offset": 4542865,
+        "data_offset": 4542873,
+        "size_in_bytes": 464806
+      },
+      {
+        "index": 20,
+        "type": "ReplayData",
+        "type_offset": 5007679,
+        "data_offset": 5007687,
+        "size_in_bytes": 189471
+      },
+      {
+        "index": 21,
+        "type": "Checkpoint",
+        "type_offset": 5197158,
+        "data_offset": 5197166,
+        "size_in_bytes": 135543
+      },
+      {
+        "index": 22,
+        "type": "ReplayData",
+        "type_offset": 5332709,
+        "data_offset": 5332717,
+        "size_in_bytes": 364527
+      },
+      {
+        "index": 23,
+        "type": "ReplayData",
+        "type_offset": 5697244,
+        "data_offset": 5697252,
+        "size_in_bytes": 187945
+      },
+      {
+        "index": 24,
+        "type": "Checkpoint",
+        "type_offset": 5885197,
+        "data_offset": 5885205,
+        "size_in_bytes": 138627
+      },
+      {
+        "index": 25,
+        "type": "ReplayData",
+        "type_offset": 6023832,
+        "data_offset": 6023840,
+        "size_in_bytes": 339279
+      },
+      {
+        "index": 26,
+        "type": "ReplayData",
+        "type_offset": 6363119,
+        "data_offset": 6363127,
+        "size_in_bytes": 140751
+      },
+      {
+        "index": 27,
+        "type": "Checkpoint",
+        "type_offset": 6503878,
+        "data_offset": 6503886,
+        "size_in_bytes": 139477
+      },
+      {
+        "index": 28,
+        "type": "ReplayData",
+        "type_offset": 6643363,
+        "data_offset": 6643371,
+        "size_in_bytes": 318433
+      },
+      {
+        "index": 29,
+        "type": "ReplayData",
+        "type_offset": 6961804,
+        "data_offset": 6961812,
+        "size_in_bytes": 174145
+      },
+      {
+        "index": 30,
+        "type": "Checkpoint",
+        "type_offset": 7135957,
+        "data_offset": 7135965,
+        "size_in_bytes": 139546
+      },
+      {
+        "index": 31,
+        "type": "ReplayData",
+        "type_offset": 7275511,
+        "data_offset": 7275519,
+        "size_in_bytes": 329487
+      },
+      {
+        "index": 32,
+        "type": "ReplayData",
+        "type_offset": 7605006,
+        "data_offset": 7605014,
+        "size_in_bytes": 178019
+      },
+      {
+        "index": 33,
+        "type": "Checkpoint",
+        "type_offset": 7783033,
+        "data_offset": 7783041,
+        "size_in_bytes": 143658
+      },
+      {
+        "index": 34,
+        "type": "ReplayData",
+        "type_offset": 7926699,
+        "data_offset": 7926707,
+        "size_in_bytes": 336860
+      },
+      {
+        "index": 35,
+        "type": "ReplayData",
+        "type_offset": 8263567,
+        "data_offset": 8263575,
+        "size_in_bytes": 115271
+      }
+    ]
+  },
+  {
+    "file": "TyrReplay4.replay",
+    "file_size": 5602373,
+    "magic": "0x1ca2e27f",
+    "file_version": 7,
+    "serialization_version": 7,
+    "custom_versions": [
+      {
+        "guid": "3ef0a495e4490b7e56d343bad987ff94",
+        "version": 7
+      }
+    ],
+    "length_in_ms": 189210,
+    "network_version": 337258096,
+    "changelist": 31351,
+    "friendly_name": "                                                                                                                                                                                                                                                                \u0000",
+    "is_live": false,
+    "timestamp_ticks": 639182080717540000,
+    "timestamp_iso": "2026-06-28T01:47:51.754000+00:00",
+    "b_compressed": false,
+    "b_encrypted": false,
+    "encryption_key_len": 0,
+    "header_end_offset": 586,
+    "reached_eof": true,
+    "chunks": [
+      {
+        "index": 0,
+        "type": "Header",
+        "type_offset": 586,
+        "data_offset": 594,
+        "size_in_bytes": 226
+      },
+      {
+        "index": 1,
+        "type": "ReplayData",
+        "type_offset": 820,
+        "data_offset": 828,
+        "size_in_bytes": 418111
+      },
+      {
+        "index": 2,
+        "type": "ReplayData",
+        "type_offset": 418939,
+        "data_offset": 418947,
+        "size_in_bytes": 163688
+      },
+      {
+        "index": 3,
+        "type": "Checkpoint",
+        "type_offset": 582635,
+        "data_offset": 582643,
+        "size_in_bytes": 126536
+      },
+      {
+        "index": 4,
+        "type": "ReplayData",
+        "type_offset": 709179,
+        "data_offset": 709187,
+        "size_in_bytes": 572384
+      },
+      {
+        "index": 5,
+        "type": "ReplayData",
+        "type_offset": 1281571,
+        "data_offset": 1281579,
+        "size_in_bytes": 323684
+      },
+      {
+        "index": 6,
+        "type": "Checkpoint",
+        "type_offset": 1605263,
+        "data_offset": 1605271,
+        "size_in_bytes": 159961
+      },
+      {
+        "index": 7,
+        "type": "ReplayData",
+        "type_offset": 1765232,
+        "data_offset": 1765240,
+        "size_in_bytes": 670092
+      },
+      {
+        "index": 8,
+        "type": "ReplayData",
+        "type_offset": 2435332,
+        "data_offset": 2435340,
+        "size_in_bytes": 337712
+      },
+      {
+        "index": 9,
+        "type": "Checkpoint",
+        "type_offset": 2773052,
+        "data_offset": 2773060,
+        "size_in_bytes": 173959
+      },
+      {
+        "index": 10,
+        "type": "ReplayData",
+        "type_offset": 2947019,
+        "data_offset": 2947027,
+        "size_in_bytes": 545874
+      },
+      {
+        "index": 11,
+        "type": "ReplayData",
+        "type_offset": 3492901,
+        "data_offset": 3492909,
+        "size_in_bytes": 233279
+      },
+      {
+        "index": 12,
+        "type": "Checkpoint",
+        "type_offset": 3726188,
+        "data_offset": 3726196,
+        "size_in_bytes": 180058
+      },
+      {
+        "index": 13,
+        "type": "ReplayData",
+        "type_offset": 3906254,
+        "data_offset": 3906262,
+        "size_in_bytes": 467911
+      },
+      {
+        "index": 14,
+        "type": "ReplayData",
+        "type_offset": 4374173,
+        "data_offset": 4374181,
+        "size_in_bytes": 195766
+      },
+      {
+        "index": 15,
+        "type": "Checkpoint",
+        "type_offset": 4569947,
+        "data_offset": 4569955,
+        "size_in_bytes": 182122
+      },
+      {
+        "index": 16,
+        "type": "ReplayData",
+        "type_offset": 4752077,
+        "data_offset": 4752085,
+        "size_in_bytes": 356273
+      },
+      {
+        "index": 17,
+        "type": "ReplayData",
+        "type_offset": 5108358,
+        "data_offset": 5108366,
+        "size_in_bytes": 179596
+      },
+      {
+        "index": 18,
+        "type": "Checkpoint",
+        "type_offset": 5287962,
+        "data_offset": 5287970,
+        "size_in_bytes": 191762
+      },
+      {
+        "index": 19,
+        "type": "ReplayData",
+        "type_offset": 5479732,
+        "data_offset": 5479740,
+        "size_in_bytes": 122633
+      }
+    ]
+  },
+  {
+    "file": "TyrReplay5.replay",
+    "file_size": 11234180,
+    "magic": "0x1ca2e27f",
+    "file_version": 7,
+    "serialization_version": 7,
+    "custom_versions": [
+      {
+        "guid": "3ef0a495e4490b7e56d343bad987ff94",
+        "version": 7
+      }
+    ],
+    "length_in_ms": 523288,
+    "network_version": 337258096,
+    "changelist": 31351,
+    "friendly_name": "                                                                                                                                                                                                                                                                \u0000",
+    "is_live": false,
+    "timestamp_ticks": 639182036214110000,
+    "timestamp_iso": "2026-06-28T00:33:41.411000+00:00",
+    "b_compressed": false,
+    "b_encrypted": false,
+    "encryption_key_len": 0,
+    "header_end_offset": 586,
+    "reached_eof": true,
+    "chunks": [
+      {
+        "index": 0,
+        "type": "Header",
+        "type_offset": 586,
+        "data_offset": 594,
+        "size_in_bytes": 226
+      },
+      {
+        "index": 1,
+        "type": "ReplayData",
+        "type_offset": 820,
+        "data_offset": 828,
+        "size_in_bytes": 486956
+      },
+      {
+        "index": 2,
+        "type": "ReplayData",
+        "type_offset": 487784,
+        "data_offset": 487792,
+        "size_in_bytes": 171742
+      },
+      {
+        "index": 3,
+        "type": "Checkpoint",
+        "type_offset": 659534,
+        "data_offset": 659542,
+        "size_in_bytes": 114239
+      },
+      {
+        "index": 4,
+        "type": "ReplayData",
+        "type_offset": 773781,
+        "data_offset": 773789,
+        "size_in_bytes": 380902
+      },
+      {
+        "index": 5,
+        "type": "ReplayData",
+        "type_offset": 1154691,
+        "data_offset": 1154699,
+        "size_in_bytes": 218088
+      },
+      {
+        "index": 6,
+        "type": "Checkpoint",
+        "type_offset": 1372787,
+        "data_offset": 1372795,
+        "size_in_bytes": 125923
+      },
+      {
+        "index": 7,
+        "type": "ReplayData",
+        "type_offset": 1498718,
+        "data_offset": 1498726,
+        "size_in_bytes": 553294
+      },
+      {
+        "index": 8,
+        "type": "ReplayData",
+        "type_offset": 2052020,
+        "data_offset": 2052028,
+        "size_in_bytes": 276284
+      },
+      {
+        "index": 9,
+        "type": "Checkpoint",
+        "type_offset": 2328312,
+        "data_offset": 2328320,
+        "size_in_bytes": 133525
+      },
+      {
+        "index": 10,
+        "type": "ReplayData",
+        "type_offset": 2461845,
+        "data_offset": 2461853,
+        "size_in_bytes": 519202
+      },
+      {
+        "index": 11,
+        "type": "ReplayData",
+        "type_offset": 2981055,
+        "data_offset": 2981063,
+        "size_in_bytes": 250141
+      },
+      {
+        "index": 12,
+        "type": "Checkpoint",
+        "type_offset": 3231204,
+        "data_offset": 3231212,
+        "size_in_bytes": 146701
+      },
+      {
+        "index": 13,
+        "type": "ReplayData",
+        "type_offset": 3377913,
+        "data_offset": 3377921,
+        "size_in_bytes": 623355
+      },
+      {
+        "index": 14,
+        "type": "ReplayData",
+        "type_offset": 4001276,
+        "data_offset": 4001284,
+        "size_in_bytes": 235722
+      },
+      {
+        "index": 15,
+        "type": "Checkpoint",
+        "type_offset": 4237006,
+        "data_offset": 4237014,
+        "size_in_bytes": 160958
+      },
+      {
+        "index": 16,
+        "type": "ReplayData",
+        "type_offset": 4397972,
+        "data_offset": 4397980,
+        "size_in_bytes": 522417
+      },
+      {
+        "index": 17,
+        "type": "ReplayData",
+        "type_offset": 4920397,
+        "data_offset": 4920405,
+        "size_in_bytes": 258839
+      },
+      {
+        "index": 18,
+        "type": "Checkpoint",
+        "type_offset": 5179244,
+        "data_offset": 5179252,
+        "size_in_bytes": 166682
+      },
+      {
+        "index": 19,
+        "type": "ReplayData",
+        "type_offset": 5345934,
+        "data_offset": 5345942,
+        "size_in_bytes": 366833
+      },
+      {
+        "index": 20,
+        "type": "ReplayData",
+        "type_offset": 5712775,
+        "data_offset": 5712783,
+        "size_in_bytes": 195727
+      },
+      {
+        "index": 21,
+        "type": "Checkpoint",
+        "type_offset": 5908510,
+        "data_offset": 5908518,
+        "size_in_bytes": 166393
+      },
+      {
+        "index": 22,
+        "type": "ReplayData",
+        "type_offset": 6074911,
+        "data_offset": 6074919,
+        "size_in_bytes": 429439
+      },
+      {
+        "index": 23,
+        "type": "ReplayData",
+        "type_offset": 6504358,
+        "data_offset": 6504366,
+        "size_in_bytes": 169871
+      },
+      {
+        "index": 24,
+        "type": "Checkpoint",
+        "type_offset": 6674237,
+        "data_offset": 6674245,
+        "size_in_bytes": 172258
+      },
+      {
+        "index": 25,
+        "type": "ReplayData",
+        "type_offset": 6846503,
+        "data_offset": 6846511,
+        "size_in_bytes": 273641
+      },
+      {
+        "index": 26,
+        "type": "ReplayData",
+        "type_offset": 7120152,
+        "data_offset": 7120160,
+        "size_in_bytes": 127870
+      },
+      {
+        "index": 27,
+        "type": "Checkpoint",
+        "type_offset": 7248030,
+        "data_offset": 7248038,
+        "size_in_bytes": 167696
+      },
+      {
+        "index": 28,
+        "type": "ReplayData",
+        "type_offset": 7415734,
+        "data_offset": 7415742,
+        "size_in_bytes": 236712
+      },
+      {
+        "index": 29,
+        "type": "ReplayData",
+        "type_offset": 7652454,
+        "data_offset": 7652462,
+        "size_in_bytes": 96517
+      },
+      {
+        "index": 30,
+        "type": "Checkpoint",
+        "type_offset": 7748979,
+        "data_offset": 7748987,
+        "size_in_bytes": 165781
+      },
+      {
+        "index": 31,
+        "type": "ReplayData",
+        "type_offset": 7914768,
+        "data_offset": 7914776,
+        "size_in_bytes": 231447
+      },
+      {
+        "index": 32,
+        "type": "ReplayData",
+        "type_offset": 8146223,
+        "data_offset": 8146231,
+        "size_in_bytes": 106099
+      },
+      {
+        "index": 33,
+        "type": "Checkpoint",
+        "type_offset": 8252330,
+        "data_offset": 8252338,
+        "size_in_bytes": 162657
+      },
+      {
+        "index": 34,
+        "type": "ReplayData",
+        "type_offset": 8414995,
+        "data_offset": 8415003,
+        "size_in_bytes": 219265
+      },
+      {
+        "index": 35,
+        "type": "ReplayData",
+        "type_offset": 8634268,
+        "data_offset": 8634276,
+        "size_in_bytes": 97910
+      },
+      {
+        "index": 36,
+        "type": "Checkpoint",
+        "type_offset": 8732186,
+        "data_offset": 8732194,
+        "size_in_bytes": 163986
+      },
+      {
+        "index": 37,
+        "type": "ReplayData",
+        "type_offset": 8896180,
+        "data_offset": 8896188,
+        "size_in_bytes": 231755
+      },
+      {
+        "index": 38,
+        "type": "ReplayData",
+        "type_offset": 9127943,
+        "data_offset": 9127951,
+        "size_in_bytes": 111473
+      },
+      {
+        "index": 39,
+        "type": "Checkpoint",
+        "type_offset": 9239424,
+        "data_offset": 9239432,
+        "size_in_bytes": 164702
+      },
+      {
+        "index": 40,
+        "type": "ReplayData",
+        "type_offset": 9404134,
+        "data_offset": 9404142,
+        "size_in_bytes": 222342
+      },
+      {
+        "index": 41,
+        "type": "ReplayData",
+        "type_offset": 9626484,
+        "data_offset": 9626492,
+        "size_in_bytes": 94614
+      },
+      {
+        "index": 42,
+        "type": "Checkpoint",
+        "type_offset": 9721106,
+        "data_offset": 9721114,
+        "size_in_bytes": 165249
+      },
+      {
+        "index": 43,
+        "type": "ReplayData",
+        "type_offset": 9886363,
+        "data_offset": 9886371,
+        "size_in_bytes": 171476
+      },
+      {
+        "index": 44,
+        "type": "ReplayData",
+        "type_offset": 10057847,
+        "data_offset": 10057855,
+        "size_in_bytes": 70852
+      },
+      {
+        "index": 45,
+        "type": "Checkpoint",
+        "type_offset": 10128707,
+        "data_offset": 10128715,
+        "size_in_bytes": 164703
+      },
+      {
+        "index": 46,
+        "type": "ReplayData",
+        "type_offset": 10293418,
+        "data_offset": 10293426,
+        "size_in_bytes": 173244
+      },
+      {
+        "index": 47,
+        "type": "ReplayData",
+        "type_offset": 10466670,
+        "data_offset": 10466678,
+        "size_in_bytes": 101896
+      },
+      {
+        "index": 48,
+        "type": "Checkpoint",
+        "type_offset": 10568574,
+        "data_offset": 10568582,
+        "size_in_bytes": 165676
+      },
+      {
+        "index": 49,
+        "type": "ReplayData",
+        "type_offset": 10734258,
+        "data_offset": 10734266,
+        "size_in_bytes": 175949
+      },
+      {
+        "index": 50,
+        "type": "ReplayData",
+        "type_offset": 10910215,
+        "data_offset": 10910223,
+        "size_in_bytes": 87233
+      },
+      {
+        "index": 51,
+        "type": "Checkpoint",
+        "type_offset": 10997456,
+        "data_offset": 10997464,
+        "size_in_bytes": 167260
+      },
+      {
+        "index": 52,
+        "type": "ReplayData",
+        "type_offset": 11164724,
+        "data_offset": 11164732,
+        "size_in_bytes": 69448
+      }
+    ]
+  },
+  {
+    "file": "TyrReplay6.replay",
+    "file_size": 6143654,
+    "magic": "0x1ca2e27f",
+    "file_version": 7,
+    "serialization_version": 7,
+    "custom_versions": [
+      {
+        "guid": "3ef0a495e4490b7e56d343bad987ff94",
+        "version": 7
+      }
+    ],
+    "length_in_ms": 233248,
+    "network_version": 337258096,
+    "changelist": 31351,
+    "friendly_name": "                                                                                                                                                                                                                                                                \u0000",
+    "is_live": false,
+    "timestamp_ticks": 639182042662730000,
+    "timestamp_iso": "2026-06-28T00:44:26.273000+00:00",
+    "b_compressed": false,
+    "b_encrypted": false,
+    "encryption_key_len": 0,
+    "header_end_offset": 586,
+    "reached_eof": true,
+    "chunks": [
+      {
+        "index": 0,
+        "type": "Header",
+        "type_offset": 586,
+        "data_offset": 594,
+        "size_in_bytes": 226
+      },
+      {
+        "index": 1,
+        "type": "ReplayData",
+        "type_offset": 820,
+        "data_offset": 828,
+        "size_in_bytes": 389339
+      },
+      {
+        "index": 2,
+        "type": "ReplayData",
+        "type_offset": 390167,
+        "data_offset": 390175,
+        "size_in_bytes": 184087
+      },
+      {
+        "index": 3,
+        "type": "Checkpoint",
+        "type_offset": 574262,
+        "data_offset": 574270,
+        "size_in_bytes": 119931
+      },
+      {
+        "index": 4,
+        "type": "ReplayData",
+        "type_offset": 694201,
+        "data_offset": 694209,
+        "size_in_bytes": 500430
+      },
+      {
+        "index": 5,
+        "type": "ReplayData",
+        "type_offset": 1194639,
+        "data_offset": 1194647,
+        "size_in_bytes": 292918
+      },
+      {
+        "index": 6,
+        "type": "Checkpoint",
+        "type_offset": 1487565,
+        "data_offset": 1487573,
+        "size_in_bytes": 137180
+      },
+      {
+        "index": 7,
+        "type": "ReplayData",
+        "type_offset": 1624753,
+        "data_offset": 1624761,
+        "size_in_bytes": 646561
+      },
+      {
+        "index": 8,
+        "type": "ReplayData",
+        "type_offset": 2271322,
+        "data_offset": 2271330,
+        "size_in_bytes": 292150
+      },
+      {
+        "index": 9,
+        "type": "Checkpoint",
+        "type_offset": 2563480,
+        "data_offset": 2563488,
+        "size_in_bytes": 151731
+      },
+      {
+        "index": 10,
+        "type": "ReplayData",
+        "type_offset": 2715219,
+        "data_offset": 2715227,
+        "size_in_bytes": 504925
+      },
+      {
+        "index": 11,
+        "type": "ReplayData",
+        "type_offset": 3220152,
+        "data_offset": 3220160,
+        "size_in_bytes": 211460
+      },
+      {
+        "index": 12,
+        "type": "Checkpoint",
+        "type_offset": 3431620,
+        "data_offset": 3431628,
+        "size_in_bytes": 157260
+      },
+      {
+        "index": 13,
+        "type": "ReplayData",
+        "type_offset": 3588888,
+        "data_offset": 3588896,
+        "size_in_bytes": 466276
+      },
+      {
+        "index": 14,
+        "type": "ReplayData",
+        "type_offset": 4055172,
+        "data_offset": 4055180,
+        "size_in_bytes": 223121
+      },
+      {
+        "index": 15,
+        "type": "Checkpoint",
+        "type_offset": 4278301,
+        "data_offset": 4278309,
+        "size_in_bytes": 156240
+      },
+      {
+        "index": 16,
+        "type": "ReplayData",
+        "type_offset": 4434549,
+        "data_offset": 4434557,
+        "size_in_bytes": 393997
+      },
+      {
+        "index": 17,
+        "type": "ReplayData",
+        "type_offset": 4828554,
+        "data_offset": 4828562,
+        "size_in_bytes": 192055
+      },
+      {
+        "index": 18,
+        "type": "Checkpoint",
+        "type_offset": 5020617,
+        "data_offset": 5020625,
+        "size_in_bytes": 159200
+      },
+      {
+        "index": 19,
+        "type": "ReplayData",
+        "type_offset": 5179825,
+        "data_offset": 5179833,
+        "size_in_bytes": 361948
+      },
+      {
+        "index": 20,
+        "type": "ReplayData",
+        "type_offset": 5541781,
+        "data_offset": 5541789,
+        "size_in_bytes": 172976
+      },
+      {
+        "index": 21,
+        "type": "Checkpoint",
+        "type_offset": 5714765,
+        "data_offset": 5714773,
+        "size_in_bytes": 159357
+      },
+      {
+        "index": 22,
+        "type": "ReplayData",
+        "type_offset": 5874130,
+        "data_offset": 5874138,
+        "size_in_bytes": 256093
+      },
+      {
+        "index": 23,
+        "type": "ReplayData",
+        "type_offset": 6130231,
+        "data_offset": 6130239,
+        "size_in_bytes": 13415
+      }
+    ]
+  },
+  {
+    "file": "TyrReplay7.replay",
+    "file_size": 7250111,
+    "magic": "0x1ca2e27f",
+    "file_version": 7,
+    "serialization_version": 7,
+    "custom_versions": [
+      {
+        "guid": "3ef0a495e4490b7e56d343bad987ff94",
+        "version": 7
+      }
+    ],
+    "length_in_ms": 266488,
+    "network_version": 337258096,
+    "changelist": 31351,
+    "friendly_name": "                                                                                                                                                                                                                                                                \u0000",
+    "is_live": false,
+    "timestamp_ticks": 639182046198900000,
+    "timestamp_iso": "2026-06-28T00:50:19.890000+00:00",
+    "b_compressed": false,
+    "b_encrypted": false,
+    "encryption_key_len": 0,
+    "header_end_offset": 586,
+    "reached_eof": true,
+    "chunks": [
+      {
+        "index": 0,
+        "type": "Header",
+        "type_offset": 586,
+        "data_offset": 594,
+        "size_in_bytes": 226
+      },
+      {
+        "index": 1,
+        "type": "ReplayData",
+        "type_offset": 820,
+        "data_offset": 828,
+        "size_in_bytes": 500050
+      },
+      {
+        "index": 2,
+        "type": "ReplayData",
+        "type_offset": 500878,
+        "data_offset": 500886,
+        "size_in_bytes": 174901
+      },
+      {
+        "index": 3,
+        "type": "Checkpoint",
+        "type_offset": 675787,
+        "data_offset": 675795,
+        "size_in_bytes": 112300
+      },
+      {
+        "index": 4,
+        "type": "ReplayData",
+        "type_offset": 788095,
+        "data_offset": 788103,
+        "size_in_bytes": 399995
+      },
+      {
+        "index": 5,
+        "type": "ReplayData",
+        "type_offset": 1188098,
+        "data_offset": 1188106,
+        "size_in_bytes": 286521
+      },
+      {
+        "index": 6,
+        "type": "Checkpoint",
+        "type_offset": 1474627,
+        "data_offset": 1474635,
+        "size_in_bytes": 136537
+      },
+      {
+        "index": 7,
+        "type": "ReplayData",
+        "type_offset": 1611172,
+        "data_offset": 1611180,
+        "size_in_bytes": 598944
+      },
+      {
+        "index": 8,
+        "type": "ReplayData",
+        "type_offset": 2210124,
+        "data_offset": 2210132,
+        "size_in_bytes": 266231
+      },
+      {
+        "index": 9,
+        "type": "Checkpoint",
+        "type_offset": 2476363,
+        "data_offset": 2476371,
+        "size_in_bytes": 145031
+      },
+      {
+        "index": 10,
+        "type": "ReplayData",
+        "type_offset": 2621402,
+        "data_offset": 2621410,
+        "size_in_bytes": 441068
+      },
+      {
+        "index": 11,
+        "type": "ReplayData",
+        "type_offset": 3062478,
+        "data_offset": 3062486,
+        "size_in_bytes": 244452
+      },
+      {
+        "index": 12,
+        "type": "Checkpoint",
+        "type_offset": 3306938,
+        "data_offset": 3306946,
+        "size_in_bytes": 151928
+      },
+      {
+        "index": 13,
+        "type": "ReplayData",
+        "type_offset": 3458874,
+        "data_offset": 3458882,
+        "size_in_bytes": 603082
+      },
+      {
+        "index": 14,
+        "type": "ReplayData",
+        "type_offset": 4061964,
+        "data_offset": 4061972,
+        "size_in_bytes": 294425
+      },
+      {
+        "index": 15,
+        "type": "Checkpoint",
+        "type_offset": 4356397,
+        "data_offset": 4356405,
+        "size_in_bytes": 163989
+      },
+      {
+        "index": 16,
+        "type": "ReplayData",
+        "type_offset": 4520394,
+        "data_offset": 4520402,
+        "size_in_bytes": 537684
+      },
+      {
+        "index": 17,
+        "type": "ReplayData",
+        "type_offset": 5058086,
+        "data_offset": 5058094,
+        "size_in_bytes": 273771
+      },
+      {
+        "index": 18,
+        "type": "Checkpoint",
+        "type_offset": 5331865,
+        "data_offset": 5331873,
+        "size_in_bytes": 170585
+      },
+      {
+        "index": 19,
+        "type": "ReplayData",
+        "type_offset": 5502458,
+        "data_offset": 5502466,
+        "size_in_bytes": 387017
+      },
+      {
+        "index": 20,
+        "type": "ReplayData",
+        "type_offset": 5889483,
+        "data_offset": 5889491,
+        "size_in_bytes": 162379
+      },
+      {
+        "index": 21,
+        "type": "Checkpoint",
+        "type_offset": 6051870,
+        "data_offset": 6051878,
+        "size_in_bytes": 172520
+      },
+      {
+        "index": 22,
+        "type": "ReplayData",
+        "type_offset": 6224398,
+        "data_offset": 6224406,
+        "size_in_bytes": 304467
+      },
+      {
+        "index": 23,
+        "type": "ReplayData",
+        "type_offset": 6528873,
+        "data_offset": 6528881,
+        "size_in_bytes": 120931
+      },
+      {
+        "index": 24,
+        "type": "Checkpoint",
+        "type_offset": 6649812,
+        "data_offset": 6649820,
+        "size_in_bytes": 171520
+      },
+      {
+        "index": 25,
+        "type": "ReplayData",
+        "type_offset": 6821340,
+        "data_offset": 6821348,
+        "size_in_bytes": 334556
+      },
+      {
+        "index": 26,
+        "type": "ReplayData",
+        "type_offset": 7155904,
+        "data_offset": 7155912,
+        "size_in_bytes": 94199
+      }
+    ]
+  },
+  {
+    "file": "TyrReplay8.replay",
+    "file_size": 9116115,
+    "magic": "0x1ca2e27f",
+    "file_version": 7,
+    "serialization_version": 7,
+    "custom_versions": [
+      {
+        "guid": "3ef0a495e4490b7e56d343bad987ff94",
+        "version": 7
+      }
+    ],
+    "length_in_ms": 402902,
+    "network_version": 337258096,
+    "changelist": 31351,
+    "friendly_name": "                                                                                                                                                                                                                                                                \u0000",
+    "is_live": false,
+    "timestamp_ticks": 639182050025710000,
+    "timestamp_iso": "2026-06-28T00:56:42.571000+00:00",
+    "b_compressed": false,
+    "b_encrypted": false,
+    "encryption_key_len": 0,
+    "header_end_offset": 586,
+    "reached_eof": true,
+    "chunks": [
+      {
+        "index": 0,
+        "type": "Header",
+        "type_offset": 586,
+        "data_offset": 594,
+        "size_in_bytes": 226
+      },
+      {
+        "index": 1,
+        "type": "ReplayData",
+        "type_offset": 820,
+        "data_offset": 828,
+        "size_in_bytes": 270445
+      },
+      {
+        "index": 2,
+        "type": "ReplayData",
+        "type_offset": 271273,
+        "data_offset": 271281,
+        "size_in_bytes": 134309
+      },
+      {
+        "index": 3,
+        "type": "Checkpoint",
+        "type_offset": 405590,
+        "data_offset": 405598,
+        "size_in_bytes": 71635
+      },
+      {
+        "index": 4,
+        "type": "ReplayData",
+        "type_offset": 477233,
+        "data_offset": 477241,
+        "size_in_bytes": 308780
+      },
+      {
+        "index": 5,
+        "type": "ReplayData",
+        "type_offset": 786021,
+        "data_offset": 786029,
+        "size_in_bytes": 195270
+      },
+      {
+        "index": 6,
+        "type": "Checkpoint",
+        "type_offset": 981299,
+        "data_offset": 981307,
+        "size_in_bytes": 76848
+      },
+      {
+        "index": 7,
+        "type": "ReplayData",
+        "type_offset": 1058155,
+        "data_offset": 1058163,
+        "size_in_bytes": 398775
+      },
+      {
+        "index": 8,
+        "type": "ReplayData",
+        "type_offset": 1456938,
+        "data_offset": 1456946,
+        "size_in_bytes": 259746
+      },
+      {
+        "index": 9,
+        "type": "Checkpoint",
+        "type_offset": 1716692,
+        "data_offset": 1716700,
+        "size_in_bytes": 93121
+      },
+      {
+        "index": 10,
+        "type": "ReplayData",
+        "type_offset": 1809821,
+        "data_offset": 1809829,
+        "size_in_bytes": 606478
+      },
+      {
+        "index": 11,
+        "type": "ReplayData",
+        "type_offset": 2416307,
+        "data_offset": 2416315,
+        "size_in_bytes": 343619
+      },
+      {
+        "index": 12,
+        "type": "Checkpoint",
+        "type_offset": 2759934,
+        "data_offset": 2759942,
+        "size_in_bytes": 112569
+      },
+      {
+        "index": 13,
+        "type": "ReplayData",
+        "type_offset": 2872511,
+        "data_offset": 2872519,
+        "size_in_bytes": 490356
+      },
+      {
+        "index": 14,
+        "type": "ReplayData",
+        "type_offset": 3362875,
+        "data_offset": 3362883,
+        "size_in_bytes": 206331
+      },
+      {
+        "index": 15,
+        "type": "Checkpoint",
+        "type_offset": 3569214,
+        "data_offset": 3569222,
+        "size_in_bytes": 114510
+      },
+      {
+        "index": 16,
+        "type": "ReplayData",
+        "type_offset": 3683732,
+        "data_offset": 3683740,
+        "size_in_bytes": 377456
+      },
+      {
+        "index": 17,
+        "type": "ReplayData",
+        "type_offset": 4061196,
+        "data_offset": 4061204,
+        "size_in_bytes": 173727
+      },
+      {
+        "index": 18,
+        "type": "Checkpoint",
+        "type_offset": 4234931,
+        "data_offset": 4234939,
+        "size_in_bytes": 117212
+      },
+      {
+        "index": 19,
+        "type": "ReplayData",
+        "type_offset": 4352151,
+        "data_offset": 4352159,
+        "size_in_bytes": 435843
+      },
+      {
+        "index": 20,
+        "type": "ReplayData",
+        "type_offset": 4788002,
+        "data_offset": 4788010,
+        "size_in_bytes": 203305
+      },
+      {
+        "index": 21,
+        "type": "Checkpoint",
+        "type_offset": 4991315,
+        "data_offset": 4991323,
+        "size_in_bytes": 116853
+      },
+      {
+        "index": 22,
+        "type": "ReplayData",
+        "type_offset": 5108176,
+        "data_offset": 5108184,
+        "size_in_bytes": 371084
+      },
+      {
+        "index": 23,
+        "type": "ReplayData",
+        "type_offset": 5479268,
+        "data_offset": 5479276,
+        "size_in_bytes": 178044
+      },
+      {
+        "index": 24,
+        "type": "Checkpoint",
+        "type_offset": 5657320,
+        "data_offset": 5657328,
+        "size_in_bytes": 114491
+      },
+      {
+        "index": 25,
+        "type": "ReplayData",
+        "type_offset": 5771819,
+        "data_offset": 5771827,
+        "size_in_bytes": 319348
+      },
+      {
+        "index": 26,
+        "type": "ReplayData",
+        "type_offset": 6091175,
+        "data_offset": 6091183,
+        "size_in_bytes": 165819
+      },
+      {
+        "index": 27,
+        "type": "Checkpoint",
+        "type_offset": 6257002,
+        "data_offset": 6257010,
+        "size_in_bytes": 110965
+      },
+      {
+        "index": 28,
+        "type": "ReplayData",
+        "type_offset": 6367975,
+        "data_offset": 6367983,
+        "size_in_bytes": 376153
+      },
+      {
+        "index": 29,
+        "type": "ReplayData",
+        "type_offset": 6744136,
+        "data_offset": 6744144,
+        "size_in_bytes": 190088
+      },
+      {
+        "index": 30,
+        "type": "Checkpoint",
+        "type_offset": 6934232,
+        "data_offset": 6934240,
+        "size_in_bytes": 114779
+      },
+      {
+        "index": 31,
+        "type": "ReplayData",
+        "type_offset": 7049019,
+        "data_offset": 7049027,
+        "size_in_bytes": 404385
+      },
+      {
+        "index": 32,
+        "type": "ReplayData",
+        "type_offset": 7453412,
+        "data_offset": 7453420,
+        "size_in_bytes": 220523
+      },
+      {
+        "index": 33,
+        "type": "Checkpoint",
+        "type_offset": 7673943,
+        "data_offset": 7673951,
+        "size_in_bytes": 115308
+      },
+      {
+        "index": 34,
+        "type": "ReplayData",
+        "type_offset": 7789259,
+        "data_offset": 7789267,
+        "size_in_bytes": 350204
+      },
+      {
+        "index": 35,
+        "type": "ReplayData",
+        "type_offset": 8139471,
+        "data_offset": 8139479,
+        "size_in_bytes": 159548
+      },
+      {
+        "index": 36,
+        "type": "Checkpoint",
+        "type_offset": 8299027,
+        "data_offset": 8299035,
+        "size_in_bytes": 115252
+      },
+      {
+        "index": 37,
+        "type": "ReplayData",
+        "type_offset": 8414287,
+        "data_offset": 8414295,
+        "size_in_bytes": 317005
+      },
+      {
+        "index": 38,
+        "type": "ReplayData",
+        "type_offset": 8731300,
+        "data_offset": 8731308,
+        "size_in_bytes": 163920
+      },
+      {
+        "index": 39,
+        "type": "Checkpoint",
+        "type_offset": 8895228,
+        "data_offset": 8895236,
+        "size_in_bytes": 113584
+      },
+      {
+        "index": 40,
+        "type": "ReplayData",
+        "type_offset": 9008820,
+        "data_offset": 9008828,
+        "size_in_bytes": 107287
+      }
+    ]
+  },
+  {
+    "file": "TyrReplay9.replay",
+    "file_size": 10634284,
+    "magic": "0x1ca2e27f",
+    "file_version": 7,
+    "serialization_version": 7,
+    "custom_versions": [
+      {
+        "guid": "3ef0a495e4490b7e56d343bad987ff94",
+        "version": 7
+      }
+    ],
+    "length_in_ms": 496240,
+    "network_version": 337258096,
+    "changelist": 31351,
+    "friendly_name": "                                                                                                                                                                                                                                                                \u0000",
+    "is_live": false,
+    "timestamp_ticks": 639182059189230000,
+    "timestamp_iso": "2026-06-28T01:11:58.923000+00:00",
+    "b_compressed": false,
+    "b_encrypted": false,
+    "encryption_key_len": 0,
+    "header_end_offset": 586,
+    "reached_eof": true,
+    "chunks": [
+      {
+        "index": 0,
+        "type": "Header",
+        "type_offset": 586,
+        "data_offset": 594,
+        "size_in_bytes": 226
+      },
+      {
+        "index": 1,
+        "type": "ReplayData",
+        "type_offset": 820,
+        "data_offset": 828,
+        "size_in_bytes": 454086
+      },
+      {
+        "index": 2,
+        "type": "ReplayData",
+        "type_offset": 454914,
+        "data_offset": 454922,
+        "size_in_bytes": 165793
+      },
+      {
+        "index": 3,
+        "type": "Checkpoint",
+        "type_offset": 620715,
+        "data_offset": 620723,
+        "size_in_bytes": 114498
+      },
+      {
+        "index": 4,
+        "type": "ReplayData",
+        "type_offset": 735221,
+        "data_offset": 735229,
+        "size_in_bytes": 376234
+      },
+      {
+        "index": 5,
+        "type": "ReplayData",
+        "type_offset": 1111463,
+        "data_offset": 1111471,
+        "size_in_bytes": 209933
+      },
+      {
+        "index": 6,
+        "type": "Checkpoint",
+        "type_offset": 1321404,
+        "data_offset": 1321412,
+        "size_in_bytes": 131729
+      },
+      {
+        "index": 7,
+        "type": "ReplayData",
+        "type_offset": 1453141,
+        "data_offset": 1453149,
+        "size_in_bytes": 519964
+      },
+      {
+        "index": 8,
+        "type": "ReplayData",
+        "type_offset": 1973113,
+        "data_offset": 1973121,
+        "size_in_bytes": 260346
+      },
+      {
+        "index": 9,
+        "type": "Checkpoint",
+        "type_offset": 2233467,
+        "data_offset": 2233475,
+        "size_in_bytes": 142959
+      },
+      {
+        "index": 10,
+        "type": "ReplayData",
+        "type_offset": 2376434,
+        "data_offset": 2376442,
+        "size_in_bytes": 556197
+      },
+      {
+        "index": 11,
+        "type": "ReplayData",
+        "type_offset": 2932639,
+        "data_offset": 2932647,
+        "size_in_bytes": 276831
+      },
+      {
+        "index": 12,
+        "type": "Checkpoint",
+        "type_offset": 3209478,
+        "data_offset": 3209486,
+        "size_in_bytes": 152716
+      },
+      {
+        "index": 13,
+        "type": "ReplayData",
+        "type_offset": 3362202,
+        "data_offset": 3362210,
+        "size_in_bytes": 368248
+      },
+      {
+        "index": 14,
+        "type": "ReplayData",
+        "type_offset": 3730458,
+        "data_offset": 3730466,
+        "size_in_bytes": 216884
+      },
+      {
+        "index": 15,
+        "type": "Checkpoint",
+        "type_offset": 3947350,
+        "data_offset": 3947358,
+        "size_in_bytes": 149969
+      },
+      {
+        "index": 16,
+        "type": "ReplayData",
+        "type_offset": 4097327,
+        "data_offset": 4097335,
+        "size_in_bytes": 372585
+      },
+      {
+        "index": 17,
+        "type": "ReplayData",
+        "type_offset": 4469920,
+        "data_offset": 4469928,
+        "size_in_bytes": 188672
+      },
+      {
+        "index": 18,
+        "type": "Checkpoint",
+        "type_offset": 4658600,
+        "data_offset": 4658608,
+        "size_in_bytes": 151549
+      },
+      {
+        "index": 19,
+        "type": "ReplayData",
+        "type_offset": 4810157,
+        "data_offset": 4810165,
+        "size_in_bytes": 351189
+      },
+      {
+        "index": 20,
+        "type": "ReplayData",
+        "type_offset": 5161354,
+        "data_offset": 5161362,
+        "size_in_bytes": 166243
+      },
+      {
+        "index": 21,
+        "type": "Checkpoint",
+        "type_offset": 5327605,
+        "data_offset": 5327613,
+        "size_in_bytes": 153156
+      },
+      {
+        "index": 22,
+        "type": "ReplayData",
+        "type_offset": 5480769,
+        "data_offset": 5480777,
+        "size_in_bytes": 381595
+      },
+      {
+        "index": 23,
+        "type": "ReplayData",
+        "type_offset": 5862372,
+        "data_offset": 5862380,
+        "size_in_bytes": 154881
+      },
+      {
+        "index": 24,
+        "type": "Checkpoint",
+        "type_offset": 6017261,
+        "data_offset": 6017269,
+        "size_in_bytes": 157569
+      },
+      {
+        "index": 25,
+        "type": "ReplayData",
+        "type_offset": 6174838,
+        "data_offset": 6174846,
+        "size_in_bytes": 280482
+      },
+      {
+        "index": 26,
+        "type": "ReplayData",
+        "type_offset": 6455328,
+        "data_offset": 6455336,
+        "size_in_bytes": 140251
+      },
+      {
+        "index": 27,
+        "type": "Checkpoint",
+        "type_offset": 6595587,
+        "data_offset": 6595595,
+        "size_in_bytes": 156126
+      },
+      {
+        "index": 28,
+        "type": "ReplayData",
+        "type_offset": 6751721,
+        "data_offset": 6751729,
+        "size_in_bytes": 292734
+      },
+      {
+        "index": 29,
+        "type": "ReplayData",
+        "type_offset": 7044463,
+        "data_offset": 7044471,
+        "size_in_bytes": 124249
+      },
+      {
+        "index": 30,
+        "type": "Checkpoint",
+        "type_offset": 7168720,
+        "data_offset": 7168728,
+        "size_in_bytes": 153427
+      },
+      {
+        "index": 31,
+        "type": "ReplayData",
+        "type_offset": 7322155,
+        "data_offset": 7322163,
+        "size_in_bytes": 194743
+      },
+      {
+        "index": 32,
+        "type": "ReplayData",
+        "type_offset": 7516906,
+        "data_offset": 7516914,
+        "size_in_bytes": 110037
+      },
+      {
+        "index": 33,
+        "type": "Checkpoint",
+        "type_offset": 7626951,
+        "data_offset": 7626959,
+        "size_in_bytes": 153266
+      },
+      {
+        "index": 34,
+        "type": "ReplayData",
+        "type_offset": 7780225,
+        "data_offset": 7780233,
+        "size_in_bytes": 248746
+      },
+      {
+        "index": 35,
+        "type": "ReplayData",
+        "type_offset": 8028979,
+        "data_offset": 8028987,
+        "size_in_bytes": 111521
+      },
+      {
+        "index": 36,
+        "type": "Checkpoint",
+        "type_offset": 8140508,
+        "data_offset": 8140516,
+        "size_in_bytes": 153871
+      },
+      {
+        "index": 37,
+        "type": "ReplayData",
+        "type_offset": 8294387,
+        "data_offset": 8294395,
+        "size_in_bytes": 285402
+      },
+      {
+        "index": 38,
+        "type": "ReplayData",
+        "type_offset": 8579797,
+        "data_offset": 8579805,
+        "size_in_bytes": 115531
+      },
+      {
+        "index": 39,
+        "type": "Checkpoint",
+        "type_offset": 8695336,
+        "data_offset": 8695344,
+        "size_in_bytes": 153999
+      },
+      {
+        "index": 40,
+        "type": "ReplayData",
+        "type_offset": 8849343,
+        "data_offset": 8849351,
+        "size_in_bytes": 221926
+      },
+      {
+        "index": 41,
+        "type": "ReplayData",
+        "type_offset": 9071277,
+        "data_offset": 9071285,
+        "size_in_bytes": 146506
+      },
+      {
+        "index": 42,
+        "type": "Checkpoint",
+        "type_offset": 9217791,
+        "data_offset": 9217799,
+        "size_in_bytes": 156512
+      },
+      {
+        "index": 43,
+        "type": "ReplayData",
+        "type_offset": 9374311,
+        "data_offset": 9374319,
+        "size_in_bytes": 269310
+      },
+      {
+        "index": 44,
+        "type": "ReplayData",
+        "type_offset": 9643629,
+        "data_offset": 9643637,
+        "size_in_bytes": 122278
+      },
+      {
+        "index": 45,
+        "type": "Checkpoint",
+        "type_offset": 9765915,
+        "data_offset": 9765923,
+        "size_in_bytes": 155261
+      },
+      {
+        "index": 46,
+        "type": "ReplayData",
+        "type_offset": 9921184,
+        "data_offset": 9921192,
+        "size_in_bytes": 253896
+      },
+      {
+        "index": 47,
+        "type": "ReplayData",
+        "type_offset": 10175088,
+        "data_offset": 10175096,
+        "size_in_bytes": 112366
+      },
+      {
+        "index": 48,
+        "type": "Checkpoint",
+        "type_offset": 10287462,
+        "data_offset": 10287470,
+        "size_in_bytes": 155891
+      },
+      {
+        "index": 49,
+        "type": "ReplayData",
+        "type_offset": 10443361,
+        "data_offset": 10443369,
+        "size_in_bytes": 190915
+      }
+    ]
+  }
+]

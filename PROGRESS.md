@@ -90,7 +90,7 @@ Status values: `⬜ Not started` / `🟨 In progress` / `✅ Done (validated + m
 - [x] Magic + version reader, asserted across all 10 files
 - [x] Top-level metadata block parsed (incl. bCompressed/bEncrypted confirmed false)
 - [x] Chunk table walker lands exactly on EOF for all 10 files
-- [ ] Chunk-table report printed and eyeballed per file
+- [x] Chunk-table report printed and eyeballed per file
 - [ ] Field-by-field static cross-check (no live debugging available)
 
 **Commits:**
