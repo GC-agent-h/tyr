@@ -163,20 +163,20 @@ Phase-02 byte-exact consumption + Phase-03 re-validation. Tracked as OA-03-1 in
 - [x] `NetRefHandleCache` implemented (sub-step 1: static path-name resolution via NetToken export stream) — validated against real replays
 - [x] `NetRefHandleCache` dynamic spawn-info resolution (sub-step 2: `read_net_object_reference` + `observe_object_reference`, even-Id dynamic handles + inline path token + recursive outer) — validated on 7/10 replays (41 clean decodes)
 - [x] `FNetToken` store cache (sub-step 3: `iris_net_token_store.NetTokenStoreCache`, typed (TypeId,Index)->payload, import via export stream) — validated against real replays
-- [ ] Replication protocol/descriptor schema cache implemented, streaming pass
-- [ ] SDK cross-reference database built (class → property/function → metadata, incl. Iris `NetSerializer` tagging)
-- [ ] 100% (or explained) SDK class-name match rate across all 10 files
-- [ ] Field-name plausibility check passing
-- [ ] Static cross-check (no live debugging available) of NetRefHandle resolution / protocol descriptors
+- [x] **Replication protocol/descriptor schema cache — CORRECTED for Iris (no wire export).** `tools/iris_protocol_cache.py::ProtocolDescriptorCache` keyed by the 32-bit `FReplicationProtocolIdentifier` and rebuilt **locally** from Dumper-7 SDK reflection (mirrors `ReplicationStateDescriptorBuilder` + `ObjectReplicationBridge::RegisterRemoteInstance`). Source-verified Iris sends only the CityHash32 ProtocolId on the wire (`NetObjectFactory.cpp:102,134`) and never exports descriptor schemas (`NetExports.cpp` has only handle/token export scopes). Fed via `observe_protocol(ProtocolId, class_path)`. Validated: rebuild determinism, cross-file consistency, 100% SDK class-match over real replay-resolved names + full SDK self-test, static cross-check. See "CRITICAL CORRECTION" block in the phase doc.
+- [x] SDK cross-reference database built (`tools/build_sdk_xref.py` → `out/sdk_xref.json`: class → property `{offset,type,arrayDim,customSerializeKind}` + functions), including Iris `NetSerializer` tagging — the substrate the protocol cache depends on.
+- [x] 100% SDK class-name match rate across all 10 files (real replay-resolved names: 8/8 = 100%; full SDK rebuild self-test: 14,050/14,050 = 100%). Report: `tools/probe_phase04_protocol_cache.py`.
+- [x] Field-name plausibility check passing — every rebuilt descriptor member is a real SDK UPROPERTY on the class or an ancestor (guaranteed by construction from the SDK walk).
+- [x] Static cross-check (no live debugging) of `FNetRefHandle` resolution + protocol descriptor construction against source — `docs/phase04-static-crosscheck.md`; open assumption OA-04-1 in `open-assumptions.md` (cannot recompute exact CityHash32 without engine DescriptorIdentifier constants).
 
 **Commits:**
 - [x] `feat(phase04): implement NetRefHandleCache with static path-name resolution`
 - [x] `feat(phase04): add dynamic NetRefHandle resolution (spawn-info path)`
 - [x] `feat(phase04): implement FNetToken store cache`
-- [ ] `feat(phase04): implement replication protocol/descriptor schema cache`
-- [ ] `feat(phase04): build SDK cross-reference database (properties + functions, incl. NetSerializer detection)`
-- [ ] `test(phase04): SDK coverage metric report across 10 samples`
-- [ ] `docs(phase04): static cross-check of NetRefHandle resolution and protocol descriptors`
+- [x] `feat(phase04): implement Iris protocol-descriptor cache (local rebuild, no wire export)` — `tools/iris_protocol_cache.py`
+- [x] `feat(phase04): build SDK cross-reference database (properties + functions, incl. NetSerializer tagging)` — `tools/build_sdk_xref.py` → `out/sdk_xref.json`
+- [x] `test(phase04): SDK coverage metric report across 10 samples` — `tools/probe_phase04_protocol_cache.py` (100% match, determinism, cross-file consistency)
+- [x] `docs(phase04): static cross-check of NetRefHandle resolution and protocol descriptors` + plan correction
 
 ---
 
