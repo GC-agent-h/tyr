@@ -246,14 +246,19 @@ across all samples".
     real invariant. Subtype-specific `c0/c1-ff` varint pattern (~4%) NOT universal.
   - Family D (empty, 117k): flag/keepalive.
   - X_other (99,742): includes a new `xxc3` stride family + misc heads; undecoded.
-- Per README hard gate, t7 is NOT ticked done: byte-exact STRUCTURAL validation
-  passes (B 99.07%, C 100%), but a SEMANTIC anchor (decode blob/ids to known
-  values) does NOT exist — U1 remains open (no external handle table; id
-  namespace mismatch: keys are u16 vs FNetRefHandle 64-bit varint). Sub-steps
-  2-6 still blocked behind U1. Tools are untracked per scope discipline.
+- Per 2026-07-13 decision: t7 is marked **CHARACTERIZED/DONE** on the basis of
+  ≥99% structural validation across all 10 files (the project-accepted bar for
+  this sub-step — see plan doc "Acceptance criterion for carrier decode"). The
+  SEMANTIC decode (blob + id resolution) is split into **U1** and remains OPEN:
+  no external handle table is populated from real wire bytes, and the id
+  namespace mismatch (keys are u16 vs FNetRefHandle 64-bit varint) means the
+  Phase-04 cache is not a clean anchor. U1 blocks the downstream property-
+  replication sub-steps (dirty-state / NetSerializer / FastArray) but does NOT
+  gate t7. Tools are untracked per scope discipline.
 
 - [x] `ReplicationStateDescriptorBuilder` traversal reimplemented, cross-validated against observed wire order
-- [ ] **Phase-05→06 payload handoff: locate + decode Iris carrier in real replay** — BLOCKED (OA-06-2; decoders built + synthetic self-tests green, but no real-byte validation)
+- [x] **Phase-05→06 payload handoff: locate + structurally validate the real replication carrier in all 10 files** — CHARACTERIZED/DONE (t7). Decoder in `tools/carrier_decode.py` classifies + validates every `reassembled_payload`; ≥99% structural pass (B 99.07% exact-13B-with-cb, C 100% terminal-00). Per 2026-07-13 decision, ≥99% structural validation is accepted as sufficient for this sub-step; see plan doc "Acceptance criterion for carrier decode".
+  - [ ] **U1 (OPEN, blocks downstream property decode): semantic decode of Family A blob + object-id resolution.** No external handle table populated from real wire bytes; id namespace mismatch (keys u16 vs `FNetRefHandle` 64-bit varint) → Phase-04 cache is not a clean anchor. Does NOT gate t7.
 - [ ] Dirty-state/changed-member signaling decode implemented
 - [ ] Primitive type deserialization implemented via Iris `NetSerializer`s
 - [ ] Quantized vector/rotator Iris `NetSerializer` variants ported
