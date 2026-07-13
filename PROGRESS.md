@@ -226,13 +226,21 @@ across all samples".
   `tools/iris_datastream_manager.py` (UDataStreamManager region header). Both
   green. `frame_walk.py` extended with `reassembled_payload` on Bunch for the
   handoff.
-- Real-replay location of the Iris envelope is **refuted** on TyrReplay1 (see
-  OA-06-2): no post-bunch residual, the largest bunch (ch13, 2000B) is not the
-  Iris envelope, byte-aligned brute scan finds 0 clean regions, and the replay
-  has no Iris-dedicated chunk. TYR's replication carrier is therefore UNKNOWN
-  (likely legacy actor-channel property replication, or a customized Iris variant).
-- Per README rule, t7 is NOT ticked done — it has no passing real-byte
-  validation. Sub-steps 2-6 are blocked behind identifying the real carrier.
+- Real-replay location of the pristine Iris `FReplicationReader` envelope is
+  **refuted on all three independent static checks** (see OA-06-2, updated):
+  per-bunch bit-level test 0/84,536 clean decodes; byte-aligned chunk scan 0
+  hits; bit-aligned chunk scan noise-level only. The envelope is absent under
+  ANY framing. Option (iii) of OA-06-2 ("Iris region under different framing")
+  is now CLOSED/refuted.
+- The **actual carrier is observed but not yet decoded**: it lives inside
+  actor-channel bunch payloads (`reassembled_payload`) and shows two recurring
+  structured grammar families (Family A: `0x21/0x1f` count + fixed-stride u16
+  ramp; Family B: `0100..0700` count + ~0x0800-0x2200 u16 values). It is NOT
+  the pristine Iris envelope NOR a simple legacy `FRepLayout` count-prefixed
+  array (that hypothesis also tested 0/0). See `docs/06-property-replication.md`
+  "Plan correction" section for the revised sub-step ordering.
+- Per README rule, t7 is NOT ticked done — no passing real-byte validation of
+  the actual carrier yet. Sub-steps 2-6 are blocked behind decoding Family A/B.
 
 - [x] `ReplicationStateDescriptorBuilder` traversal reimplemented, cross-validated against observed wire order
 - [ ] **Phase-05→06 payload handoff: locate + decode Iris carrier in real replay** — BLOCKED (OA-06-2; decoders built + synthetic self-tests green, but no real-byte validation)

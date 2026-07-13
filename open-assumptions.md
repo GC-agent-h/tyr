@@ -88,7 +88,79 @@ tracker rather than silently treating it as confirmed."
   Init-state blocks contain exactly the expected Init set; OR obtain the per-property
   `ReplicationCondition` from the running binary / a richer Dumper-7 dump.
 
-### OA-06-2 — Iris `FReplicationReader` envelope NOT located in real replay bytes
+### OA-06-2 — Iris `FReplicationReader` envelope refuted (option iii CLOSED); real carrier is a structured actor-bunch payload of UNKNOWN grammar
+
+**Status (2026-07-13, updated):** The pristine UE5.6 `FReplicationReader::Read`
+envelope (ReplicationReader.cpp:2924 — `[2-bit debug features][16-bit
+ObjectBatchCountToRead][if>0: 16-bit DestroyedObjectCount + destroy records]`)
+is **refuted as the carrier** in TYR's replays, via THREE independent static
+checks (any one would be strong; all three agree):
+
+1. **Per-bunch bit-level test** (`tools/diag_carrier.py`, TyrReplay1): every one
+   of 84,536 reassembled bunch payloads was fed through a strict Iris-envelope
+   prefilter (debug==0 AND ObjectBatchCount in [1,8192) AND, if>0,
+   DestroyedObjectCount in sane range AND destroy records parse without
+   overflow). **0** payloads passed. 71,472 payloads begin with `debug==3`
+   (invalid for a shipping build where `ensure(StreamDebugFeatures==None)`),
+   only 38 begin with `debug==0`, and none of those with a sane object count.
+2. **Byte-aligned scan** of the ReplayData chunk (prior OA-06-2 evidence,
+   `tools/_dbg_scan2.py`): 0 clean `walk_manager` decodes.
+3. **Bit-aligned scan** (`tools/scan_iris_bits.py`, TyrReplay1, ~3.99M bits):
+   only 20 offsets passed a *loose* prefilter — a 5e-6 hit rate consistent with
+   statistical noise, not signal. A real envelope would appear at a bounded
+   number of true offsets.
+
+**Conclusion:** TYR's replication data does NOT ride in the pristine
+`FReplicationReader::Read` bitstream under ANY framing (not in a separate
+UDataStreamManager region, not byte-aligned inside bunches, not bit-aligned
+anywhere in the chunk). Option (iii) of the original OA-06-2 ("Iris region
+under a different framing") is **closed/refuted**.
+
+**What the real carrier IS (observed, NOT yet decoded):**
+- It lives **inside actor-channel bunch payloads** (`reassembled_payload`), i.e.
+  the replay uses the legacy DemoNetDriver transport (frames/packets/bunches,
+  Phase 05) but the bunch *contents* are neither the Iris `Read` envelope nor
+  (as tested) a simple legacy `FRepLayout` count-prefixed array.
+- It is **structured and regular**, with at least two recurring families seen
+  in `tools/diag_dump_largest.py` + `tools/diag_channel_map.py`:
+  - Family A (largest bunches, ch 228/229/13): leading `0x21`/`0x1f`
+    (SerializeIntPacked-decoded small count) then a fixed-stride **u16 LE**
+    stream incrementing by a constant (e.g. `1c77, 1c7f, 1c87, ...` = +8;
+    or `2a22, 5a32, ...` = +0x1010). The stride-constant ramp suggests an
+    index/offset table rather than raw semantic values.
+  - Family B (many channels, control+open spawn bunches and updates): leading
+    `0100`/`0200`/`0300`/`0400`/`0700` (SerializeIntPacked64-decoded to small
+    counts 0,1,2,3,7) followed by larger u16 values in the ~0x0800–0x2200
+    range (≈2000–8700), which are in the plausible **object-index / NetRefHandle
+    range** (cross-reference against Phase-04 resolved handles still TBD).
+- `DataChannel.cpp` in this `/UE` subset only routes Iris **control** messages
+  (NMT_IrisProtocolMismatch / NMT_IrisNetRefHandleError / …) — it does NOT
+  handle the Iris data stream inside actor bunches, corroborating that the
+  data stream is not the standard `FReplicationReader` shape here.
+
+**Interpretation (CANDIDATE, not confirmed):** TYR ships a **customized/older
+Iris variant** OR a **game-specific replication carrier** whose wire envelope
+differs from the 5.6 source we have. The Phase-06 Iris `FReplicationReader`
+decoders in `tools/iris_datastream.py` / `tools/iris_datastream_manager.py`
+remain source-accurate for pristine 5.6 (reusable if the real variant is ever
+obtained) but do **not** match TYR's bytes.
+
+**Next action (authorized by original OA-06-2 close-condition (i)/(ii)):**
+decode the OBSERVED carrier. Concrete plan correction recorded in
+`docs/06-property-replication.md` ("Plan correction — Iris envelope refuted"):
+the Phase-06 work must now target the actual actor-bunch payload grammar, not
+the pristine Iris `FReplicationReader`. Validation = full bit/byte consumption
+of real payloads + semantic plausibility (positions in level bounds, etc.) per
+the phase doc's Validation section.
+
+**Close condition:** successfully decode Family A and/or B payloads (full
+consumption + at least one semantically-plausible value anchored to a
+Phase-04-resolved object), OR obtain TYR's actual Iris variant source/binary
+and re-run the envelope scan against it.
+
+- **Risk:** until the carrier grammar is decoded, sub-steps 2-6 (dirty-state,
+  NetSerializers, FastArray) cannot be validated against real bytes. The
+  decoder artifacts remain correct per source grammar and reusable.
 - **What:** The Phase 06 handoff assumed TYR's Iris replication data appears as a
   `FReplicationReader` envelope (ReplicationReader.cpp:2924-2986:
   `[2-bit debug features][u16 ObjectBatchCountToRead][u16 DestroyCount][destroy records][batches...]`)
