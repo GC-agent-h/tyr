@@ -120,3 +120,78 @@ then ran a battery of structural diagnostics:
    the most tractable and most likely to reach byte-exact consumption first.
 3. Re-run the phase-doc Validation (full consumption + one semantic anchor)
    only after U1 is closed. Do NOT tick Phase-06 t7 until then.
+
+## ADDENDUM 2026-07-13 (internal static validators exhausted)
+
+Further probing of Family A's body to find a non-tautological validator:
+
+- REFUTED: body = N equal-sized records. `body_len % N == 0` held for only
+  40.8% of 7,861 candidate bunches (~ chance level for random N); `body_len//N`
+  scatters across 19/30/32/33/34/36/37/... with no dominant record size. (90%.)
+- REFUTED: body = N `[u16 sublen][sublen bytes]` variable records. Exact
+  consumption = 0/7,861. u8 sublen variant = 97/7,861 (1.23% ≈ chance). (90%.)
+- Therefore: the `count:u16` counts the **object-id list**, not records that
+  tile the body. The body is a single OPAQUE serialized-state blob. The
+  surviving model is exactly: `[count:u16][N×u16 external object-id][blob]`.
+  This container is byte-exact by construction (count fixes id-bytes, rest =
+  blob) but UNDER-CONSTRAINED as a validator (any count fits) — consistent with
+  the earlier C1 caveat. (85%.)
+
+Implication for U1: **no further internal static test can close U1.** The body
+semantics and the id-resolution require an EXTERNAL anchor that is not present
+in the available data:
+
+- Phase-04 `NetRefHandleCache.handle_cache` is NOT populated from real wire
+  bytes by any committed walker (probe_phase04_iris.py only fills the
+  token_store path-strings via the separate NetToken export stream). So there
+  is no real handle table to test keys against.
+- Even if wired, Phase-04 `FNetRefHandle.raw_id` is a `SerializeIntPacked64`
+  (64-bit varint, unbounded by 16 bits), whereas Family-A keys are **u16
+  (max 65535, 98.8% odd)**. The namespaces do not line up: the keys are not
+  literal `.raw_id` values. So "wire the handle cache and match keys" is not a
+  clean anchor — it would require an un-evidenced mapping.
+- Keys span the full u16 range (max 65535) and ramp by fixed per-channel
+  stride (587,595,603…), so they are NOT small indices into a tiny table. The
+  98.8% odd parity is best explained as a game-specific id encoding (e.g.
+  low bits = type/static flag), NOT legacy raw_id parity. (CANDIDATE 40%.)
+
+## ADDENDUM 2 (2026-07-13) — CORRECTED family validators (decoder built)
+
+After raw byte inspection of `carrier_decode.py` over all 10 files, TWO
+earlier claims were RETRACTED (over-read from small samples):
+
+- RETRACTED: "Family B is a SerializeIntPacked stream reading [6475,1,4,0]".
+  That was a forced varint read past a non-continuation byte (`cb 42 01 04 00`:
+  byte 3 = 0x01, high-bit clear, yet not last). Family B is NOT a varint stream.
+- RETRACTED: "Family B is a fixed 13B record with constant anchors
+  `01 04 00` / `03 02 00`". Offsets 1–12 are variable data, not constants.
+
+CORRECTED, DEFENSIBLE structural validators (non-tautological — a random byte
+stream does not match these at the observed rates):
+
+- **Family B (`cb`)**: 99.07% of `cb` bunches are EXACTLY 13 bytes with `0xcb`
+  at offset 0 (175,973/177,619). Rare length variants (9/17/26/40/56B) = 0.93%.
+  Invariant = `pl[0]==0xcb AND len==13`. (Random match ≈ 1/256 × 1/256.)
+- **Family C (`xx08-0b`)**: 774,307 bunches, **100% terminate in `0x00`**,
+  length band 24–50B. The `c0/c1-ff` varint pattern seen in some samples is
+  subtype-specific (~4% of samples), NOT universal — RETRACTED as the family
+  signature. Invariant = `pl[1] in {0x08..0x0b} AND pl[-1]==0x00`. (Random
+  terminal-00 ≈ 0.4%.)
+- **Family A (large >=256B)** and **E (`0100`, N=1)**: container
+  `[count:u16][N×u16 id][blob]`; keys 98.8% odd, 99.7% > body_len (reconfirmed
+  across 85,066 bunches).
+- **Family D (empty)**: 117,036 flag/keepalive bunches.
+- Remaining **X_other = 99,742** bunches incl. a newly-seen `xxc3` stride
+  family (`bbc3/fbc3/d3c3/a3c3`) + `4b00`/`0b21`/`04`(1-byte) heads. Not yet
+  characterized.
+
+Decision point: U1 cannot be closed statically with current tooling. Options:
+  (a) Build a per-file object/name table from the Family-C (`xx0a`) blocks and
+      test whether Family-A keys index into it (needs Family C decoded first).
+  (b) Accept the carrier CHARACTERIZATION as the deliverable for this sub-step
+      (container grammar KNOWN; blob+ids OPEN) and move Family A decoding to
+      CANDIDATE; proceed to build the Family B (bit-packed) decoder, which is
+      self-validating and does not need an external anchor.
+  (c) Attempt to wire Phase-04 token export + handle observation into the real
+      frame walker and build a genuine cross-anchor (largest effort, highest
+      payoff if the id-namespace mismatch can be bridged).

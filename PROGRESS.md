@@ -232,22 +232,25 @@ across all samples".
   hits; bit-aligned chunk scan noise-level only. The envelope is absent under
   ANY framing. Option (iii) of OA-06-2 ("Iris region under different framing")
   is now CLOSED/refuted.
-- The **actual carrier is observed and partially characterized** (see new
-  `docs/06-carrier-findings.md`): it lives inside actor-channel
-  `reassembled_payload` and is a TYR-specific **multi-grammar** structure, NOT
-  the pristine Iris envelope NOR a single legacy shape. ≥3 recurring families:
-  - Family A (large ≥256B): `count:u16` + N×u16 key + body blob; keys ramp by
-    fixed per-channel stride, 99.7% are > body_len (index outside body), 98.8%
-    ODD (refutes raw FNetRefHandle raw_id parity). Dominant for big bunches.
-  - Family B (`cb32`/`cb42`, ~146k/file, 13B): genuinely SerializeIntPacked
-    bit-packed (reads `[6475,1,4,0,...]` cleanly) — control/reference records.
-  - Family C (`xx0a`, 51–58B): byte-structured name/arg blocks (NOT bit-packed).
-  - plus empty (flag) and `0100` (= Family A N=1) families.
-- Per README hard gate, t7 is NOT ticked done: a validated full decoder (byte-
-  exact consumption + external anchor) does NOT yet exist. The earlier
-  "pass-rate" metric was tautological (any u16 count "consumes"); genuine
-  evidence is the structural observations above. U1 (exact count/key encoding +
-  external anchor) remains open. Sub-steps 2-6 blocked behind resolving U1.
+- The **actual carrier is observed, classified, and structurally validated**
+  (see `docs/06-carrier-findings.md` ADDENDUM 2 + `tools/carrier_decode.py`):
+  it lives inside actor-channel `reassembled_payload` and is a TYR-specific
+  **multi-grammar** structure, NOT the pristine Iris envelope NOR a single
+  legacy shape. Families (byte-inspected, cross-validated over all 10 files):
+  - Family A (large >=256B) + E (0100=N=1): `count:u16` + N×u16 id + body blob;
+    keys ramp by fixed per-channel stride, 99.7% > body_len, 98.8% ODD
+    (refutes raw FNetRefHandle parity). Container KNOWN; blob+ids semantics OPEN.
+  - Family B (`cb`): 99.07% are EXACTLY 13 bytes with `0xcb` (175,973/177,619)
+    — real non-tautological invariant. Contents not yet decoded.
+  - Family C (`xx08-0b`, 774k): 100% terminate in `0x00`, length band 24-50B —
+    real invariant. Subtype-specific `c0/c1-ff` varint pattern (~4%) NOT universal.
+  - Family D (empty, 117k): flag/keepalive.
+  - X_other (99,742): includes a new `xxc3` stride family + misc heads; undecoded.
+- Per README hard gate, t7 is NOT ticked done: byte-exact STRUCTURAL validation
+  passes (B 99.07%, C 100%), but a SEMANTIC anchor (decode blob/ids to known
+  values) does NOT exist — U1 remains open (no external handle table; id
+  namespace mismatch: keys are u16 vs FNetRefHandle 64-bit varint). Sub-steps
+  2-6 still blocked behind U1. Tools are untracked per scope discipline.
 
 - [x] `ReplicationStateDescriptorBuilder` traversal reimplemented, cross-validated against observed wire order
 - [ ] **Phase-05→06 payload handoff: locate + decode Iris carrier in real replay** — BLOCKED (OA-06-2; decoders built + synthetic self-tests green, but no real-byte validation)
