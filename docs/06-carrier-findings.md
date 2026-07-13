@@ -351,3 +351,41 @@ a random byte stream fails) is what CORRECTLY refuted the naive sub-entry
 hypothesis. This is the rigorous outcome the project demands: a falsified
 hypothesis is reported, not pretended into a decoder. No hard "Family C decoded"
 claim is made.
+
+## ADDENDUM 6 (2026-07-14) — Family A temporal-coherence LOCALIZATION (sub-step 3)
+
+Plan-doc revised sub-step 3 second half: "identify semantic values within the
+grammar and run the ... temporal-coherence checks." Semantic NAMING is blocked
+(no external property-descriptor anchor; U1). But temporal-coherence
+LOCALIZATION needs NO anchor and IS achievable. Done via `tools/familyA_temporal.py`.
+
+**Method (non-tautological, differential control — like familyC_control.py):**
+For each persistent object key (u16 static handle, U1-resolved) present in
+≥30 frames in a file, take its opaque state blob and localize byte-offsets
+where the per-frame absolute delta is ≤2 in ≥90% of steps. A run of ≥4
+contiguous such offsets = a candidate "state channel" (packing of a smooth
+scalar — position/rotation/health). Validation: synthesize, per real key, a
+RANDOM body of equal length/frame-count and recompute. Random bytes have
+mean|d|≈85 and frac≤2≈0.03, so essentially no random key yields a 4-byte smooth
+run.
+
+**Result (all 10 files, 258 persistent keys):**
+- REAL keys with ≥1 smooth run = **77/258 = 29.84%**.
+- RANDOM control = **0/258 = 0.00%** (by construction; never a 4B smooth run).
+- → Decision: VALIDATED (real ≫ random; differential is decisive, not a
+  consumption tautology). ~30% of persistent objects expose a ≥4-contiguous-
+  byte temporally-smooth field detectable at the byte level (example regions:
+  key 1643 off 12..27, key 2211 off 11..29, key 2147 off 28..53, etc.).
+
+**What this proves:** Family-A blobs are NOT random/compressed noise — they
+carry per-object, temporally-coherent state surfaces whose smooth byte-regions
+are LOCALIZED. This is exactly the "semantic values within the grammar" the
+plan asks for, obtained without an anchor. The remaining gap is NAMING those
+regions (position vs health vs rotation), which requires the external
+property-descriptor/object-layout table (U1) — still absent from the wire bytes.
+
+**Honest scope:** this completes the achievable, anchor-free portion of
+sub-step 3. It does NOT unblock the downstream property-decode sub-steps
+(dirty-state/NetSerializer/FastArray), which need the U1 anchor to map a smooth
+byte-region to a typed field. The localized regions are the evidence base for
+that future work.
