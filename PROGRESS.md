@@ -220,7 +220,7 @@ across all samples".
 
 > Rewritten for Iris — see updated `06-property-replication.md`.
 
-- [ ] `ReplicationStateDescriptorBuilder` traversal reimplemented, cross-validated against observed wire order
+- [x] `ReplicationStateDescriptorBuilder` traversal reimplemented, cross-validated against observed wire order
 - [ ] Dirty-state/changed-member signaling decode implemented
 - [ ] Primitive type deserialization implemented via Iris `NetSerializer`s
 - [ ] Quantized vector/rotator Iris `NetSerializer` variants ported
