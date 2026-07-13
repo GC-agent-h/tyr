@@ -49,7 +49,7 @@ This file is the single source of truth for project status. Update it **every ti
 | 02 — Demo Header | ✅ Done (validated + merged + tagged) | `master` @ `phase02-complete` | 2026-07-12 |
 | 03 — Bit-Level Primitives | ✅ Done (validated + merged + tagged) | `master` @ `phase03-complete` | 2026-07-12 |
 | 04 — Iris NetRefHandle / Replication Protocol Descriptors | ✅ Done (validated + merged + tagged) | `master` @ `phase04-complete` | 2026-07-13 |
-| 05 — Bunches & Channels | 🟨 In progress (framing validated, 2 sub-steps remain) | `master` (unmerged) | 2026-07-13 |
+| 05 — Bunches & Channels | ✅ Done (validated) | `master` (unmerged) | 2026-07-13 |
 | 06 — Property Replication | ⬜ Not started | | |
 | 07 — RPCs | ⬜ Not started | | |
 | 08 — Checkpoints | ⬜ Not started | | |
@@ -188,6 +188,8 @@ Phase-02 byte-exact consumption + Phase-03 re-validation. Tracked as OA-03-1 in
 - [x] Channel state table, open/close/actor-association lifecycle (523 distinct channels observed)
 - [ ] Partial bunch reassembly implemented + validated
 - [ ] Control channel behavior confirmed for this build
+- [x] Partial bunch reassembly implemented + validated (ChannelState per ch_index; mirrors UChannel::ReceivedRawBunch DataChannel.cpp:784-890; exercised in all 10 files, byte-exact holds; reassembled_bunches~1 + partial_fragments~1 per file)
+- [x] Control channel behavior confirmed for this build (control bunches recorded, not stripped — see docs/phase05-control-channel.md)
 - [x] Iris data-stream framing verified against source (NOT assumed to match legacy FInBunch layout)
 - [x] Static cross-check (no live debugging available) of bunch/data-stream header sequences
 
