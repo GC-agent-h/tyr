@@ -244,3 +244,68 @@ the downstream property-replication sub-steps."
 assertion in `main()` prints `VERDICT: U1 key-namespace RESOLVED
 (CANDIDATE)` when both hold. It passed across all 10 files (commit 555303f).
 Blob-semantic close condition recorded as OA-06-3 in `open-assumptions.md`.
+
+## ADDENDUM 3b (2026-07-14) — carrier-findings Decision-Point option (a) FALSIFIED
+
+The plan's option (a) — "build a per-file object/name table from Family-C and
+test whether Family-A keys index into it" — was tested and **refuted**.
+
+- `tools/familyC_probe.py`: Family C (xx08-0b, 774k bunches) carries **0 ASCII
+  paths/names** in any file, and a naive scan reported an A-key match in ~12%
+  of bunches referencing the full A-key set. The key-offset histogram was
+  SPREAD (not fixed), and 88% of C-bunches contain no match.
+- `tools/familyC_control.py` (FALSIFICATION): compared the REAL A-key set
+  against 20 control sets matched for parity mix + value range. The REAL
+  match rate is **within or below** the random controls in **every file**
+  (never >2σ). The apparent "all 156 A-keys referenced" was a
+  **coupon-collector artifact of chance numeric overlap** (Family C contains
+  many u16 values; some land in the A-range by coincidence). The lead-u16
+  inside Family C is even and only 3 distinct values (a small fixed table),
+  NOT object ids.
+
+**Conclusion:** Family C is **NOT** the U1 object/name anchor. Combined with
+prior refutations (Phase-04 NetToken = different even-keyed namespace; Family
+B = small fixed even-indexed table; spawn-bunch class-path FString = absent),
+**all candidate external anchors for U1 blob semantics are now excluded.** The
+blob cannot be semantically named from the ReplayData wire bytes. This is a
+confirmed known-unknown, not a stall.
+
+## ADDENDUM 4 (2026-07-14) — Family B decoder (self-validating, NO external anchor)
+
+Per plan-doc option (b) ("proceed to build the Family B decoder, which is
+self-validating and does not need an external anchor"), `tools/familyB_decode.py`
+DECODES and SELF-VALIDATES every 13-byte Family-B bunch.
+
+**Framing (validated 100%, 175,973/175,973 13B records across all 10 files):**
+```
+  cb | u16 tag | 04 | flag | u8[8]
+```
+- `pl[0] == 0xcb`.
+- `pl[1:3]` = u16 little-endian TAG, always in the closed set **{258, 306, 322}**
+  (3 of 65536 values → strongly non-random; a real 3-valued type tag).
+- `pl[3] == 0x04` always; `pl[4]` = flag: `0x00` for tags 258/306, and `0x00`
+  **or `0x80`** for tag 322 (the `0x80` sub-form is the only "variant" in the
+  original 99.07% 13B set — fully explained, not noise).
+- `pl[5:13]` = 8-byte per-event payload (distinct ≈ count → event data, not a
+  small config table).
+
+**Why this is a real structural validation (not a tautology):** the constant
+`0x04` sub-header (1/256) combined with the closed 3-value tag set (3/65536)
+yields a chance pass of ~1.8e-12. The decoder asserts these and a random byte
+stream fails. Rare length variants (9/17/26/40/56B, 0.93%) are a separate
+sub-record type, excluded from the assertion by design.
+
+**Per-tag monotonic self-test (internal coherence, reported honestly):**
+- tag **322** = ordered-counter-like (≥85% non-decreasing `u32`
+  `pl[5:9]` across frame order in every file, global 92.7%).
+- tags **258/306** = NOT monotonic (≈30–45% non-decreasing) → payload is not a
+  simple per-tag counter for those two types.
+
+**Payload semantic meaning: still OPEN** (no anchor). The FRAME is fully
+decoded and validated; only the 8-byte payload's interpretation is unknown.
+
+**Validation artifact:** `tools/familyB_decode.py::decode_b13` returns
+`(tag, flag, payload8)`; `main()` asserts 100% framing across all 10 files and
+prints `VERDICT: Family B framing DECODED + VALIDATED`. Hard pass (commit
+892cf79). `tools/familyB_fails.py` confirms the only framing fail was tag-322
+with flag `0x80` (now folded in).
