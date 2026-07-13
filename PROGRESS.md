@@ -232,15 +232,22 @@ across all samples".
   hits; bit-aligned chunk scan noise-level only. The envelope is absent under
   ANY framing. Option (iii) of OA-06-2 ("Iris region under different framing")
   is now CLOSED/refuted.
-- The **actual carrier is observed but not yet decoded**: it lives inside
-  actor-channel bunch payloads (`reassembled_payload`) and shows two recurring
-  structured grammar families (Family A: `0x21/0x1f` count + fixed-stride u16
-  ramp; Family B: `0100..0700` count + ~0x0800-0x2200 u16 values). It is NOT
-  the pristine Iris envelope NOR a simple legacy `FRepLayout` count-prefixed
-  array (that hypothesis also tested 0/0). See `docs/06-property-replication.md`
-  "Plan correction" section for the revised sub-step ordering.
-- Per README rule, t7 is NOT ticked done — no passing real-byte validation of
-  the actual carrier yet. Sub-steps 2-6 are blocked behind decoding Family A/B.
+- The **actual carrier is observed and partially characterized** (see new
+  `docs/06-carrier-findings.md`): it lives inside actor-channel
+  `reassembled_payload` and is a TYR-specific **multi-grammar** structure, NOT
+  the pristine Iris envelope NOR a single legacy shape. ≥3 recurring families:
+  - Family A (large ≥256B): `count:u16` + N×u16 key + body blob; keys ramp by
+    fixed per-channel stride, 99.7% are > body_len (index outside body), 98.8%
+    ODD (refutes raw FNetRefHandle raw_id parity). Dominant for big bunches.
+  - Family B (`cb32`/`cb42`, ~146k/file, 13B): genuinely SerializeIntPacked
+    bit-packed (reads `[6475,1,4,0,...]` cleanly) — control/reference records.
+  - Family C (`xx0a`, 51–58B): byte-structured name/arg blocks (NOT bit-packed).
+  - plus empty (flag) and `0100` (= Family A N=1) families.
+- Per README hard gate, t7 is NOT ticked done: a validated full decoder (byte-
+  exact consumption + external anchor) does NOT yet exist. The earlier
+  "pass-rate" metric was tautological (any u16 count "consumes"); genuine
+  evidence is the structural observations above. U1 (exact count/key encoding +
+  external anchor) remains open. Sub-steps 2-6 blocked behind resolving U1.
 
 - [x] `ReplicationStateDescriptorBuilder` traversal reimplemented, cross-validated against observed wire order
 - [ ] **Phase-05→06 payload handoff: locate + decode Iris carrier in real replay** — BLOCKED (OA-06-2; decoders built + synthetic self-tests green, but no real-byte validation)
