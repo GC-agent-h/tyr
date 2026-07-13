@@ -264,6 +264,7 @@ across all samples".
     - Does NOT gate t7 (already characterized). Does block the downstream property-replication sub-steps (dirty-state / NetSerializer / FastArray) until the body format is reversed.
 - [x] **Family B structural decoder (self-validating, no external anchor)** — DONE (plan-doc option b). `tools/familyB_decode.py` decodes + validates every 13-byte Family-B bunch: `cb | u16 tag∈{258,306,322} | 04 | flag(0x00, or 0x80 for tag 322) | u8[8]`. Validated **100%** (175,973/175,973 13B records across all 10 files); the closed 3-value tag set + constant `04` sub-header is a REAL invariant (~1.8e-12 chance pass), not a tautology. Per-tag monotonic self-test: tag 322 ordered-counter-like (≥85% non-decreasing); tags 258/306 not. **Payload semantic meaning still OPEN** (no anchor); the FRAME is fully decoded. Rare length variants (9/17/26/40/56B, 0.93%) = separate sub-record type. Commit 892cf79.
 - [x] **U1 blob-semantic anchor search FALSIFIED (all candidates excluded)** — DONE (negative result, high value). `tools/familyC_control.py` falsification: Family C is NOT the object/name anchor (REAL A-key match rate within/below 20 random control sets in every file → coincidental numeric overlap). Combined with prior refutations (Phase-04 NetToken = different even-keyed namespace; Family B = small fixed even-indexed table; spawn-bunch class-path FString = absent), **all candidate external anchors for U1 blob semantics are excluded** → blob cannot be named from ReplayData wire bytes. Confirmed known-unknown. Commit 892cf79. (Carrier-findings ADDENDUM 3b/4.)
+- [x] **Family C internal-frame characterization (sub-step 3)** — DONE (honest: CHARACTERIZED, not byte-decomposed). `tools/familyC_decode.py` (+ `familyC_dump.py`,`familyC_struct_probe.py`,`familyC_grammar_probe.py`): Family C (774k bunches) internal frame = **bit-packed serial stream** (UE FBitReader/FBitWriter bunch segment). Real invariants: family-level terminal-00 re-asserted 100% (random ~0.4%); subtypes 0x09/0x0a leading `0xc0` bit-prefix at 95.7%/99.3% (0x0a clears 99% bar; 0x09 OBSERVED). REFUTED naive sub-entry hypothesis via HELD-OUT exact-consumption test (0x09 `08 u8 04 80 u8 4b 00` unit = 0.00% held-out) — NOT shipped as a false decoder. Semantic decode BLOCKED (same external property-descriptor anchor as Family A, absent on wire). Carrier-findings ADDENDUM 5.
 - [ ] Dirty-state/changed-member signaling decode implemented
 - [ ] Primitive type deserialization implemented via Iris `NetSerializer`s
 - [ ] Quantized vector/rotator Iris `NetSerializer` variants ported
@@ -283,6 +284,7 @@ across all samples".
 - [ ] `feat(phase06): implement dirty-state/changed-member signaling decode`
 - [x] `feat(phase06): add Family-A key-invariant validator proving U1 static-handle interpretation` (555303f)
 - [x] `feat(phase06): add Family-B structural decoder (cb|u16 tag|04|flag|u8[8]) + Family-C falsification control` (892cf79)
+- [x] `docs(phase06): record Family-C internal-frame characterization (ADDENDUM 5); sub-step 3 — bit-packed serial stream, naive sub-entry hypothesis held-out-refuted`
 
 ---
 

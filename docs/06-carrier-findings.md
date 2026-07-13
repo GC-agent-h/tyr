@@ -309,3 +309,45 @@ decoded and validated; only the 8-byte payload's interpretation is unknown.
 prints `VERDICT: Family B framing DECODED + VALIDATED`. Hard pass (commit
 892cf79). `tools/familyB_fails.py` confirms the only framing fail was tag-322
 with flag `0x80` (now folded in).
+
+## ADDENDUM 5 (2026-07-14) — Family C internal-frame characterization (sub-step 3)
+
+Plan-doc revised sub-step 3 ("identify semantic values within the grammar").
+Investigated Family C (xx08-0b, 774,307 bunches, ~50% of all carrier traffic)
+internal frame via `tools/familyC_decode.py` (+ `familyC_dump.py`,
+`familyC_struct_probe.py`, `familyC_grammar_probe.py`).
+
+**Structural facts (non-tautological, observed all 10 files):**
+1. Family-level invariant re-asserted: `pl[1]∈{08-0b} ∧ pl[-1]==0x00` → 100%
+   pass (random ~0.4%).
+2. Subtypes 0x09/0x0a leading content byte `pl[2]==0xc0` at 95.7% (file-10
+   run: 95.7%) / 99.3% respectively — a real near-constant bit-prefix marker
+   (random ~0.4% for a fixed byte), consistent with a UE `FBitWriter` segment
+   first byte. Reported as OBSERVED: 0x0a clears the project 99% bar
+   (99.3%); 0x09 is 95.7% so NOT a hard pass. Subtypes 0x08 (89.8%) / 0x0b
+   (58.7%) are lower — no constant leading byte.
+3. The 12-byte `pl[2:]` prefix hypothesis (H1) is REFUTED: distinct 12-byte
+   prefixes ≈ record count (high-entropy; likely per-actor GUID + timestamp).
+
+**Internal frame = bit-packed serial stream, NOT decomposable at byte level:**
+- NO fixed length-prefix at any offset (length-prefix hits ≤2.5% per subtype,
+  consistent with chance ~0.4%).
+- NO repeated fixed sub-entry unit. The eyeballed `08 u8 04 80 u8 4b 00`
+  pattern (seen in one 0x09 channel/dump) was a single-channel artifact. The
+  HELD-OUT exact-consumption test (template derived on file 1, tested on files
+  2..10) scored **0.00%** → hypothesis REFUTED, not shipped.
+- After the optional `0xc0` prefix, the payload is high-entropy
+  variable-length bit-packed data (UE-style `FBitReader`/`FBitWriter` bunch
+  segment).
+
+**Consequence:** Family C's semantic decode requires the SAME external anchor as
+Family A — the property-descriptor / object-layout table — which is absent from
+the ReplayData wire bytes (U1; OA-06-3). Family C internal frame is therefore
+**characterized** as a bit-packed serial payload stream; full semantic decode is
+**BLOCKED** (confirmed known-unknown, not a stall).
+
+**Validation discipline note:** the held-out exact-consumption self-test (which
+a random byte stream fails) is what CORRECTLY refuted the naive sub-entry
+hypothesis. This is the rigorous outcome the project demands: a falsified
+hypothesis is reported, not pretended into a decoder. No hard "Family C decoded"
+claim is made.
