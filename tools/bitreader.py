@@ -195,6 +195,15 @@ class BitReader:
     def serialize(self, n_bytes: int) -> bytes:
         return self.read_bytes(n_bytes)
 
+    def extract_payload_bits(self, bunch_like) -> bytes:
+        """Return the raw payload bit-slice [payload_start_bit, payload_end_bit)
+        of a bunch, preserving bit order (bit 0 of stream -> bit 0 of
+        byte 0). Used by partial-bunch reassembly.
+        """
+        self.seek_bits(bunch_like.payload_start_bit)
+        n = bunch_like.data_bits
+        return self.serialize_bits(n)
+
     # ---- SerializeInt (range-compacted) --------------------------------
     # Source: UE/BitReader.cpp FBitReader::SerializeInt.
     # Reads ceil(log2(ValueMax)) bits, LSB-first; OutValue < ValueMax.

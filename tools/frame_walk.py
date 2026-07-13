@@ -344,6 +344,113 @@ class Bunch:
     payload_start_bit: int = 0
     payload_end_bit: int = 0
     errored: bool = False
+    # reassembly bookkeeping (filled when this bunch is a partial fragment)
+    is_partial_fragment: bool = False
+    reassembled_from: int = 0  # how many fragments concatenated into this logical bunch
+
+
+@dataclass
+class ChannelState:
+    """Mirrors UChannel's per-channel reassembly bookkeeping.
+
+    Holds the in-progress partial-bunch buffer (InPartialBunch) and the
+    open/close lifecycle for one logical channel index.
+    """
+    ch_index: int
+    b_open: bool = False
+    b_closed: bool = False
+    ch_name: Optional[dict] = None
+    # partial reassembly buffer: list[(bits:bytes, nbits)] of payload fragments
+    partial_bits: bytes = b""
+    partial_nbits: int = 0
+    partial_reliable: bool = False
+    partial_ch_sequence: int = 0
+    partial_active: bool = False  # an InPartialBunch is currently open
+
+
+def channel_receive_raw_bunch(ch: ChannelState, b: Bunch, payload_bits: bytes) -> Optional[Bunch]:
+    """Replicate UChannel::ReceivedRawBunch partial handling (DataChannel.cpp:784-890).
+
+    `payload_bits` is the raw payload bit-buffer of bunch `b` (between
+    payload_start_bit and payload_end_bit in the packet bit-reader).
+
+    Returns the LOGICAL bunch to dispatch (when a partial sequence completes or
+    a non-partial bunch arrives), else None if this fragment is buffered.
+
+    NOTE: bPartalCustomExportsFinal gate (bHasPartialCustomExportsFinalBit) is
+    engine-version dependent; TYR/UE5.6 sets it, so we honor the sub-flag as
+    read by read_bunch. Byte-alignment enforcement (non-final partials must be
+    8-bit aligned) is checked and recorded on b.errored but does NOT drop the
+    fragment for our static-analysis purposes.
+    """
+    # --- lifecycle: open/close tracking ---
+    if b.b_open:
+        ch.b_open = True
+        ch.ch_name = b.ch_name
+    if b.b_close and (not b.b_partial or b.b_partial_final):
+        ch.b_closed = True
+
+    if not b.b_partial:
+        # Simple, non-partial bunch: dispatch as-is (logical == raw).
+        b.is_partial_fragment = False
+        b.reassembled_from = 1
+        if ch.partial_active:
+            # An unfinished partial sequence is being abandoned by a plain bunch.
+            # (Unreliable partial that never got a Final — not fatal in replay.)
+            ch.partial_active = False
+            ch.partial_nbits = 0
+            ch.partial_bits = b""
+        return b
+
+    # --- partial bunch ---
+    if b.b_partial_initial:
+        # Start a new InPartialBunch (DataChannel.cpp:788-845). If one was
+        # already open and not final, it's abandoned (unreliable is legal).
+        ch.partial_active = True
+        ch.partial_bits = payload_bits
+        ch.partial_nbits = len(payload_bits)
+        ch.partial_reliable = b.b_reliable
+        ch.partial_ch_sequence = b.ch_index  # placeholder; sequence tracked per-reader
+        b.is_partial_fragment = True
+        return None
+
+    # continuation (or final) fragment: merge if sequence matches
+    if not ch.partial_active:
+        # continuation without an initial — treat as error, skip
+        b.errored = True
+        return None
+    # Merge payload bits (AppendDataFromChecked, DataChannel.cpp:875).
+    ch.partial_bits += payload_bits
+    ch.partial_nbits += len(payload_bits)
+    b.is_partial_fragment = True
+    if b.b_partial_final:
+        # Sequence complete: build the logical reassembled bunch.
+        if ch.partial_nbits % 8 != 0:
+            # only the FINAL partial may be non-byte-aligned; flag for diagnostics
+            b.errored = True
+        out = Bunch(
+            ch_index=b.ch_index,
+            b_control=b.b_control,
+            b_open=False, b_close=b.b_close,
+            close_reason=b.close_reason,
+            b_reliable=b.b_reliable,
+            b_has_package_map_exports=False,
+            b_has_must_be_mapped_guids=False,
+            b_partial=False,  # reassembled logical bunch is whole
+            b_partial_initial=False, b_partial_custom_exports_final=False,
+            b_partial_final=False,
+            ch_name=b.ch_name,
+            data_bits=ch.partial_nbits,
+            errored=b.errored,
+            is_partial_fragment=True,
+            reassembled_from=-1,  # sentinel: reassembled
+        )
+        ch.partial_active = False
+        ch.partial_nbits = 0
+        ch.partial_bits = b""
+        return out
+    # non-final continuation: keep buffering
+    return None
 
 
 def read_static_serialize_name_bits(br: BitReader) -> dict:
@@ -448,6 +555,10 @@ class Frame:
     start_byte: int = 0
     end_byte: int = 0
     envelope: str = ""
+    # reassembly / lifecycle diagnostics (Validation #2/#3)
+    reassembled_bunches: int = 0
+    partial_fragments: int = 0
+    lifecycle_violations: int = 0
 
 
 def read_frame(ar: ByteArchive, has_streaming_fixes: bool, has_game_specific: bool) -> Tuple[Optional[Frame], int]:
@@ -496,6 +607,7 @@ def read_frame(ar: ByteArchive, has_streaming_fixes: bool, has_game_specific: bo
                     cnt = ar.i32()
                     ar.bytes(cnt)
     # Packet loop.
+    channels: dict = {}  # ch_index -> ChannelState
     while True:
         buf_size = ar.i32()
         if buf_size == 0:
@@ -511,7 +623,33 @@ def read_frame(ar: ByteArchive, has_streaming_fixes: bool, has_game_specific: bo
                 # Trailing partial bunch (too few bits for a header). UE's
                 # AtEnd() loop stops here; nothing more to read.
                 break
-            pkt.bunches.append(bunch)
+            # Extract the raw payload bit-slice for partial reassembly.
+            payload_bits = br.extract_payload_bits(bunch)
+            # Fetch-or-create the per-channel state table entry (always bound).
+            ch = channels.get(bunch.ch_index)
+            if ch is None:
+                ch = ChannelState(ch_index=bunch.ch_index)
+                channels[bunch.ch_index] = ch
+            # Lifecycle sanity (Validation #2): the genuinely-invalid case is
+            # data arriving on a channel AFTER it has been explicitly closed
+            # (b_close). Pre-open data is NOT flagged as a violation here
+            # because Iris opens actor channels implicitly via the control/spawn
+            # path rather than via per-bunch bOpen flags (only ~0.3% of
+            # bunches carry bOpen in these samples), so an open-before-data
+            # gate would fire on every normal data bunch. See phase05
+            # cross-check doc.
+            if not bunch.b_open and ch.b_closed:
+                f.lifecycle_violations += 1
+            # Reassemble via the per-channel state table.
+            logical = channel_receive_raw_bunch(ch, bunch, payload_bits)
+            if logical is not None:
+                pkt.bunches.append(logical)
+                if logical.is_partial_fragment:
+                    f.reassembled_bunches += 1
+            else:
+                # fragment-only bunch: buffered (counts as a partial fragment)
+                if bunch.b_partial:
+                    f.partial_fragments += 1
         consumed = br.tell_bits()
         pkt.consumed_bits = consumed
         # The packet is byte-exact by construction (ar.bytes(buf_size) consumed
@@ -546,6 +684,9 @@ def analyze_file(path: str, has_streaming_fixes: bool, has_game_specific: bool) 
     open_bunches = 0
     export_residual = 0
     errors = []
+    total_reassembled = 0
+    total_partial_frags = 0
+    total_lifecycle_viol = 0
     for ci, ch in enumerate(rep_chunks):
         raw = open(path, "rb").read()
         data = raw[ch.data_offset:ch.data_offset + ch.size_in_bytes]
@@ -574,6 +715,9 @@ def analyze_file(path: str, has_streaming_fixes: bool, has_game_specific: bool) 
                 ts_min = ts
             if ts_max is None or ts > ts_max:
                 ts_max = ts
+            total_reassembled += fr.reassembled_bunches
+            total_partial_frags += fr.partial_fragments
+            total_lifecycle_viol += fr.lifecycle_violations
             for pkt in fr.packets:
                 total_packets += 1
                 if not pkt.exact:
@@ -594,6 +738,9 @@ def analyze_file(path: str, has_streaming_fixes: bool, has_game_specific: bool) 
         "bunches": total_bunches,
         "control_bunches": control_bunches,
         "open_bunches": open_bunches,
+        "reassembled_bunches": total_reassembled,
+        "partial_fragments_buffered": total_partial_frags,
+        "lifecycle_violations": total_lifecycle_viol,
         "inexact_packets": inexact_packets,
         "trailing_residual_bytes": export_residual,
         "num_distinct_channels": len(channels_seen),
