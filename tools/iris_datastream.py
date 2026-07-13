@@ -14,7 +14,15 @@ grammar that UE5.6 Iris uses on the wire, sourced verbatim from:
 
 WIRE GRAMMAR (replay data stream, standard batch — not huge-object batch):
 
-  stream := repeat object_batch until payload EOF
+  payload := DebugFeatures:u2                    (ReplicationDataStreamDebug.h:31, always present)
+             ObjectBatchCountToRead:u16        (ReplicationReader.cpp:2952)
+             DestroyCount:u16                    (ReadRootObjectsPendingDestroy:459)
+             for DestroyCount:                   (destroy records)
+                 handle    = ReadPackedUint64
+                 reason    = ReadBits(3)         (EInternalDetachReason)
+             for ObjectBatchCountToRead:
+                 <object_batch below>
+
   object_batch:
       handle          = ReadPackedUint64                 (batch root FNetRefHandle id)
       batch_size      = ReadBits(16)                     (NumBitsUsedForBatchSize, ReplicationTypes.h:33)
@@ -89,6 +97,14 @@ DESTROY_HEADER_FLAGS_BIT_COUNT = 4  # EReplicatedDestroyHeaderFlags::BitCount
 # uses 6 bits for the factory id (FNetObjectFactoryId is a uint16, 6 used bits).
 FACTORY_ID_BIT_COUNT = 6
 PROTOCOL_ID_BIT_COUNT = 32         # NetObjectFactory.cpp:102/134
+OBJECT_BATCH_COUNT_BITS = 16       # ReplicationReader.cpp:2952 (ReadBits(16))
+DESTROY_OBJ_COUNT_BITS = 16        # ReadRootObjectsPendingDestroy:457 (DestroyObjectBitCount)
+DETACH_REASON_BITS = 3             # NetRefHandleManagerTypes.h:43-46 -> GetBitsNeeded(5)==3
+# ReplicationDataStreamDebug.h:31 (ReplicationDataStreamDebugFeaturesBitCount)
+# Written unconditionally by WriteStreamDebugFeatures (ReplicationWriter.cpp:4383)
+# and read first by ReadStreamDebugFeatures (ReplicationReader.cpp:2942),
+# even in shipping builds (the #if only guards the value check, not the read).
+DEBUG_FEATURES_BITS = 2
 
 
 def read_packed_uint64(br: BitReader) -> int:
@@ -144,20 +160,105 @@ class BatchInfo:
     overflow: bool = False
 
 
+@dataclass
+class PayloadInfo:
+    """Result of walking one bunch payload as an Iris data stream."""
+    object_batch_count: int
+    destroy_count: int
+    destroy_records: List
+    batches: List[BatchInfo]
+    consumed_bits: int
+    total_bits: int
+    overflow: bool
+    exact: bool
+
+
 class IrisDataStreamWalker:
     """Walks Iris replication data-stream payloads (per reassembled bunch)."""
 
     def __init__(self, max_batches_per_payload: int = 100_000) -> None:
         self.max_batches = max_batches_per_payload
 
-    def walk_payload(self, data: bytes) -> List[BatchInfo]:
-        """Walk one bunch payload as a sequence of batches. Returns batches.
+    def walk_payload(self, data: bytes) -> "PayloadInfo":
+        """Walk one bunch payload as an Iris replication data stream.
 
-        Stops at overflow, payload end, or max_batches cap. Does NOT require
-        the bridge class-path source — it halts initial-block decoding after
+        Wire order (FReplicationReader entry, ReplicationReader.cpp:2942-2986):
+            1. ReadStreamDebugFeatures  -> no-op in shipping build
+            2. uint16 ObjectBatchCountToRead = ReadBits(16)
+            3. ReadRootObjectsPendingDestroy: uint16 count, then per entry
+               [RefHandleId (packed uint64)] [DetachReason (3 bits)]
+            4. exactly ObjectBatchCountToRead batches (ReadObjects loop)
+
+        We read the headers and then walk exactly `ObjectBatchCountToRead`
+        batches (bounded by count, not by remaining_bits, so a truncated or
+        garbage payload fails loudly rather than spinning). Does NOT require
+        the bridge class-path source — initial-block decode halts after
         (factory_id, protocol_id).
+
+        Returns a PayloadInfo with the batch list and a `consumed_bits` total
+        that should equal len(data)*8 for a clean, fully-consumed stream.
         """
         br = BitReader(data)
+        # 0. ReadStreamDebugFeatures: 2 bits, always present (shipping or not).
+        debug_features = br.read_bits(DEBUG_FEATURES_BITS)  # 2
+        # 1+2: batch count header.
+        object_batch_count = br.read_bits(OBJECT_BATCH_COUNT_BITS)  # 16
+        # Sanity guard: a real Iris payload's batch count must be plausible
+        # (each batch is at least a handle + size; a garbage count from a
+        # non-Iris bunch would otherwise make the loop spin or raise). If the
+        # declared count implies more batches than can fit in the payload, this
+        # is not an Iris stream -> mark overflow and stop.
+        if object_batch_count > (len(data) * 8) // 16:
+            return PayloadInfo(
+                object_batch_count=object_batch_count, destroy_count=0,
+                destroy_records=[], batches=[], consumed_bits=br.tell_bits(),
+                total_bits=len(data) * 8, overflow=True, exact=False)
+        # 3: pending-destroy section.
+        destroy_count = br.read_bits(DESTROY_OBJ_COUNT_BITS)  # 16
+        destroy_records = []
+        for _ in range(destroy_count):
+            h = read_packed_uint64(br)
+            reason = br.read_bits(DETACH_REASON_BITS)  # 3
+            destroy_records.append((h, reason))
+        # 4: exactly object_batch_count batches.
+        batches: List[BatchInfo] = []
+        overflow = False
+        for _ in range(object_batch_count):
+            start_bit = br.tell_bits()
+            try:
+                b = self._read_batch(br)
+            except Exception:  # overflow / truncation
+                b = BatchInfo(root_handle=-1, batch_size=0,
+                              has_batch_owner_data=False, has_exports=False,
+                              num_creation_deps=0)
+                b.overflow = True
+                b.start_bit = start_bit
+                b.end_bit = br.tell_bits()
+                batches.append(b)
+                overflow = True
+                break
+            if b.end_bit <= start_bit:
+                b.overflow = True
+                b.start_bit = start_bit
+                batches.append(b)
+                overflow = True
+                break
+            batches.append(b)
+            br.seek_bits(b.end_bit)
+        consumed = br.tell_bits()
+        return PayloadInfo(
+            object_batch_count=object_batch_count,
+            destroy_count=destroy_count,
+            destroy_records=destroy_records,
+            batches=batches,
+            consumed_bits=consumed,
+            total_bits=len(data) * 8,
+            overflow=overflow,
+            exact=(consumed == len(data) * 8 and not overflow),
+        )
+
+    def walk_batches(self, br: BitReader) -> List[BatchInfo]:
+        """Unbounded batch loop (used by self-test on raw batch data)."""
         batches: List[BatchInfo] = []
         guard = 0
         while br.remaining_bits() >= 8 and guard < self.max_batches:
@@ -174,7 +275,6 @@ class IrisDataStreamWalker:
                 b.end_bit = br.tell_bits()
                 batches.append(b)
                 break
-            # Sanity: a valid batch must make forward progress.
             if b.end_bit <= start_bit:
                 b.overflow = True
                 b.start_bit = start_bit
@@ -276,13 +376,15 @@ class IrisDataStreamWalker:
 # and observable ProtocolIds.
 # ---------------------------------------------------------------------------
 
-def self_test() -> bool:
-    # Encoder mirrors ReadPackedUint64's 3-bit-bytecount scheme via write_bits.
-    # NOTE: the ROOT object (object 0) reuses the batch handle and is NOT
-    # written to the stream — only subobjects write their handle.
-    # NOTE: the three batch flags (bHasBatchOwnerData / bHasExports /
-    # bHasCreationDependencyHandles) are read INSIDE the BatchSize region
-    # (ReplicationReader.cpp:935-941), so they must be counted within body_bits.
+def encode_self_test_payload() -> bytes:
+    """Encode the synthetic Iris replication payload used by the self-test.
+
+    Mirrors the FULL payload grammar including the outer wrapper
+    (FReplicationReader entry, ReplicationReader.cpp:2942-2986):
+      [u2 debug features][u16 ObjectBatchCountToRead][u16 DestroyCount][destroy records]
+      [batch ...] * ObjectBatchCountToRead
+    Returns raw bytes (not necessarily byte-aligned at the tail).
+    """
     w = BitWriter()
     # ---- Batch 1: root 1001, 1 initial (root) + 1 delta (subobject) ----
     body = BitWriter()
@@ -310,27 +412,46 @@ def self_test() -> bool:
     w.write_bits(body2_bits, NUM_BITS_BATCH_SIZE)
     for i in range(body2_bits):
         w.write_bit((body2._buf[i >> 3] >> (i & 7)) & 1)
-    data = bytes(w._buf[:w.tell_bytes()])
+    # ---- outer wrapper ----
+    w2 = BitWriter()
+    w2.write_bits(0, DEBUG_FEATURES_BITS)                  # debug features = None
+    w2.write_bits(2, OBJECT_BATCH_COUNT_BITS)              # ObjectBatchCountToRead
+    w2.write_bits(1, DESTROY_OBJ_COUNT_BITS)               # DestroyCount
+    _write_packed_uint64(w2, 5005)                         # destroyed handle
+    w2.write_bits(0, DETACH_REASON_BITS)                   # detach reason Normal
+    for i in range(w.tell_bits()):
+        w2.write_bit((w._buf[i >> 3] >> (i & 7)) & 1)
+    return bytes(w2._buf[:w2.tell_bytes()]), w2.tell_bits()
 
+
+def self_test() -> bool:
+    # Encoder (mirrors the FULL payload grammar incl. outer wrapper) is factored
+    # into encode_self_test_payload() so the DataStreamManager decoder can reuse
+    # the exact same bytes for its own round-trip test.
+    data, encoded_bits = encode_self_test_payload()
     walker = IrisDataStreamWalker()
-    batches = walker.walk_payload(data)
-    assert len(batches) == 2, f"expected 2 batches, got {len(batches)}"
-    assert not batches[0].overflow and not batches[1].overflow
-    b0 = batches[0]
+    info = walker.walk_payload(data)
+    assert info.object_batch_count == 2, info.object_batch_count
+    assert info.destroy_count == 1 and info.destroy_records[0][0] == 5005
+    assert not info.overflow
+    assert len(info.batches) == 2, f"expected 2 batches, got {len(info.batches)}"
+    assert not info.batches[0].overflow and not info.batches[1].overflow
+    b0 = info.batches[0]
     assert len(b0.objects) == 1, f"batch0 objs={len(b0.objects)}"
     o0 = b0.objects[0]
     assert o0.handle_id == 1001
     assert o0.is_initial_state and o0.protocol_id == 0xDEADBEEF, (o0.is_initial_state, o0.protocol_id)
-    b1 = batches[1]
+    b1 = info.batches[1]
     assert len(b1.objects) == 1 and not b1.objects[0].has_state
     assert b1.objects[0].handle_id == 3003
-    # All batches bounded by their header-declared batch_end; total consumed
-    # must equal the encoded stream length exactly (no over/under-read).
-    consumed = sum((b.end_bit - b.start_bit) for b in batches)
-    assert consumed == w.tell_bits(), (consumed, w.tell_bits())
-    print(f"SELF-TEST PASSED: 2 batches, root objects extracted "
-          f"(batch0 initial protocol=0xDEADBEEF / batch1 no-state); "
-          f"bits consumed {consumed} == encoded {w.tell_bits()}")
+    # Real Iris payloads are byte-aligned at the bunch boundary, so the
+    # decoder consuming all content == len(data)*8. Our synthetic encoder is
+    # not byte-aligned (it ends mid-byte), so compare against the true encoded
+    # bit count w2.tell_bits() rather than padded len(data)*8.
+    assert info.consumed_bits == encoded_bits, (info.consumed_bits, encoded_bits)
+    print(f"SELF-TEST PASSED: 2 batches + 1 destroy record; root objects "
+          f"extracted (batch0 initial protocol=0xDEADBEEF / batch1 no-state); "
+          f"bits consumed {info.consumed_bits} == encoded {encoded_bits}")
     return True
 
 

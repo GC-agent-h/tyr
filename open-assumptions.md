@@ -88,6 +88,51 @@ tracker rather than silently treating it as confirmed."
   Init-state blocks contain exactly the expected Init set; OR obtain the per-property
   `ReplicationCondition` from the running binary / a richer Dumper-7 dump.
 
+### OA-06-2 — Iris `FReplicationReader` envelope NOT located in real replay bytes
+- **What:** The Phase 06 handoff assumed TYR's Iris replication data appears as a
+  `FReplicationReader` envelope (ReplicationReader.cpp:2924-2986:
+  `[2-bit debug features][u16 ObjectBatchCountToRead][u16 DestroyCount][destroy records][batches...]`)
+  either (a) inside a legacy UChannel bunch payload, or (b) in a separate
+  `UDataStreamManager` region appended after the bunch stream in the same packet
+  buffer (DataStreamManager.cpp:841-905). A source-faithful decoder for BOTH
+  layouts was built and passes synthetic round-trip self-tests
+  (`tools/iris_datastream.py`, `tools/iris_datastream_manager.py`).
+- **Empirical refutation (TyrReplay1, 2026-07-13):**
+  1. **Post-bunch residual:** re-walking every packet's bunch stream and
+     slicing trailing bits — 0 of ~all packets had ANY residual bits
+     (`tools/probe_iris_region.py`). The bunch loop consumes the entire packet
+     buffer, so no separate Iris region trails the bunches.
+  2. **Bunch-payload scan:** feeding every channel's reassembled-bunch payload
+     (incl. the largest, 2000 bytes on ch13 @frame16) through `walk_payload` —
+     the first 2 bits read as `debug_features=3` (invalid; shipping=0) and the
+     16-bit batch count reads as 49159 (garbage). The payload is a real,
+     substantial game payload but is NOT the Iris envelope
+     (`tools/_dbg_largest.py`).
+  3. **Byte-aligned brute scan:** scanning every byte offset in the ReplayData
+     chunk for a clean `walk_manager` decode (strict prefilter: StreamCount in
+     [1,8], mask bit0 set, debug features ∈ {0,1,2}) — 0 hits across the first
+     80k offsets of the main chunk (`tools/_dbg_scan2.py`).
+  4. **Chunk inventory:** the replay contains only `Header`, `ReplayData`,
+     `Checkpoint` chunks — no dedicated Iris blob chunk.
+- **Interpretation (PROBABLE, not confirmed):** TYR's replication does NOT use
+  the pristine UE5.6 Iris `UDataStreamManager`/`FReplicationReader` packet
+  region in this replay. Two candidate explanations, neither confirmed:
+  (i) TYR uses the **legacy UE actor-channel property-replication** path (bunch
+  payloads carry property updates directly via `UActorChannel`/RPC-style
+  serialization, not Iris), so there is no Iris envelope to find; or
+  (ii) TYR uses a **customized/older Iris variant** whose wire envelope differs
+  from the 5.6 source in `/UE`, so the modeled grammar doesn't match the bytes.
+- **Risk:** until the real carrier is identified, sub-steps 2-6 (dirty-state
+  change-mask, NetSerializers, FastArray) cannot be validated against real
+  bytes. The decoder artifacts remain correct per source grammar and reusable
+  once the correct carrier is known.
+- **Close condition:** identify the actual replication carrier — either (i)
+  confirm legacy actor-channel bunch payloads ARE the property data (decode one
+  as classic UE property replication), or (ii) obtain TYR's actual Iris
+  `FReplicationReader`/`UDataStreamManager` variant and re-run the scan, or
+  (iii) find the Iris region under a different framing (e.g. NetBlob attachment
+  path, or interleaved within a specific control channel's bunch).
+
 ---
 
 ## Caveat on the Phase-00 scaffold

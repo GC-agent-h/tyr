@@ -344,6 +344,12 @@ class Bunch:
     payload_start_bit: int = 0
     payload_end_bit: int = 0
     errored: bool = False
+    # reassembled logical payload (concatenation of all partial-fragment
+    # payloads for a reassembled bunch, or the single fragment's payload for a
+    # non-partial bunch). This is the byte buffer that downstream decoders
+    # (e.g. the Phase-06 Iris data-stream decoder) operate on. Empty only for
+    # fragment-only bunches that are still buffered (never become logical).
+    reassembled_payload: bytes = b""
     # reassembly bookkeeping (filled when this bunch is a partial fragment)
     is_partial_fragment: bool = False
     reassembled_from: int = 0  # how many fragments concatenated into this logical bunch
@@ -394,6 +400,7 @@ def channel_receive_raw_bunch(ch: ChannelState, b: Bunch, payload_bits: bytes) -
         # Simple, non-partial bunch: dispatch as-is (logical == raw).
         b.is_partial_fragment = False
         b.reassembled_from = 1
+        b.reassembled_payload = payload_bits
         if ch.partial_active:
             # An unfinished partial sequence is being abandoned by a plain bunch.
             # (Unreliable partial that never got a Final — not fatal in replay.)
@@ -444,6 +451,7 @@ def channel_receive_raw_bunch(ch: ChannelState, b: Bunch, payload_bits: bytes) -
             errored=b.errored,
             is_partial_fragment=True,
             reassembled_from=-1,  # sentinel: reassembled
+            reassembled_payload=ch.partial_bits,
         )
         ch.partial_active = False
         ch.partial_nbits = 0
@@ -539,6 +547,7 @@ class Packet:
     consumed_bits: int = 0
     exact: bool = False
     residual_bits: int = 0
+    frame_byte_offset: int = 0  # byte offset of this packet's first byte within the frame data (for external payload extraction)
 
 
 @dataclass
@@ -613,6 +622,7 @@ def read_frame(ar: ByteArchive, has_streaming_fixes: bool, has_game_specific: bo
         if buf_size == 0:
             break
         pkt = Packet(buffer_size=buf_size)
+        pkt.frame_byte_offset = ar.tell()  # before ar.bytes(buf_size) advances
         pkt_start_bit = ar.tell() * 8
         pkt_end_bit = pkt_start_bit + buf_size * 8
         br = BitReader(ar.bytes(buf_size))  # advances ar by buf_size

@@ -220,7 +220,22 @@ across all samples".
 
 > Rewritten for Iris — see updated `06-property-replication.md`.
 
+**Handoff status (2026-07-13) — BLOCKED / refuted, NOT done:**
+- Source-faithful Iris decoders built and pass synthetic round-trip self-tests:
+  `tools/iris_datastream.py` (FReplicationReader envelope) and
+  `tools/iris_datastream_manager.py` (UDataStreamManager region header). Both
+  green. `frame_walk.py` extended with `reassembled_payload` on Bunch for the
+  handoff.
+- Real-replay location of the Iris envelope is **refuted** on TyrReplay1 (see
+  OA-06-2): no post-bunch residual, the largest bunch (ch13, 2000B) is not the
+  Iris envelope, byte-aligned brute scan finds 0 clean regions, and the replay
+  has no Iris-dedicated chunk. TYR's replication carrier is therefore UNKNOWN
+  (likely legacy actor-channel property replication, or a customized Iris variant).
+- Per README rule, t7 is NOT ticked done — it has no passing real-byte
+  validation. Sub-steps 2-6 are blocked behind identifying the real carrier.
+
 - [x] `ReplicationStateDescriptorBuilder` traversal reimplemented, cross-validated against observed wire order
+- [ ] **Phase-05→06 payload handoff: locate + decode Iris carrier in real replay** — BLOCKED (OA-06-2; decoders built + synthetic self-tests green, but no real-byte validation)
 - [ ] Dirty-state/changed-member signaling decode implemented
 - [ ] Primitive type deserialization implemented via Iris `NetSerializer`s
 - [ ] Quantized vector/rotator Iris `NetSerializer` variants ported
@@ -232,17 +247,11 @@ across all samples".
 - [ ] Static cross-check (no live debugging available) of descriptor/reader logic
 
 **Commits:**
-- [ ] `feat(phase06): reimplement ReplicationStateDescriptorBuilder traversal`
-- [ ] `test(phase06): cross-validate descriptor order against observed wire sequence`
+- [x] `feat(phase06): reimplement ReplicationStateDescriptorBuilder traversal` (9f0fdf7)
+- [x] `docs(phase06): record OA-06-1 (SDK lacks COND_* reflection metadata)` (893aaca)
+- [x] `feat(phase06): Iris ReplicationStateDescriptorBuilder-backed data-stream decoder + self-test` (64228bf)
+- [x] `feat(phase06): source-faithful Iris envelope + DataStreamManager decoders; synthetic round-trip self-tests green` (this session — UNCOMMITTED on disk pending your call)
 - [ ] `feat(phase06): implement dirty-state/changed-member signaling decode`
-- [ ] `feat(phase06): implement primitive type deserialization via Iris NetSerializers`
-- [ ] `feat(phase06): port quantized vector/rotator Iris NetSerializer variants`
-- [ ] `feat(phase06): implement plain array replication`
-- [ ] `feat(phase06): implement delta-array-equivalent replication`
-- [ ] `test(phase06): naturally-occurring add/modify/remove scenario for delta arrays`
-- [ ] `feat(phase06): reverse-engineer and implement game-custom NetSerializer <name>` (repeat per struct)
-- [ ] `test(phase06): full-payload consumption + temporal coherence checks`
-- [ ] `docs(phase06): static cross-check of descriptor/reader logic`
 
 ---
 
