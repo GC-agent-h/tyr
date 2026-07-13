@@ -50,6 +50,46 @@ tracker rather than silently treating it as confirmed."
 
 ---
 
+## Phase 06 — Property Replication (Iris)
+
+### OA-06-1 — SDK lacks per-property COND_* / InitOnly / LifetimeConditional traits
+- **What:** Iris's `FPropertyReplicationStateDescriptorBuilder::CreateDescriptorsForClass`
+  (`UE/Iris/Private/Iris/ReplicationState/ReplicationStateDescriptorBuilder.cpp`,
+  lines ~2870-3040) routes each replicated member into one of three
+  `FReplicationStateDescriptor` *states* based on reflection traits the engine reads
+  from `FProperty`:
+    * **Init state** — members with `InitOnly` trait (`CPF_Init` / `RF_Init`).
+    * **LifetimeConditional state** — members with `HasLifetimeConditionals` trait
+      (= a non-`COND_None` `ReplicationCondition`), including `NetCullDistanceSquared`
+      which the builder force-injects for Actor heirs (lines 2951-2976).
+    * **Regular state** — members that are neither `InitOnly` nor conditional.
+      These are the delta-updated members; each gets `ChangeMaskBits` (default 1).
+  The Dumper-7 SDK dump (`out/sdk_index.json`) exposes per property only
+  `{name, type, kind, offset, size, count, subtypes, iris_serializer_hint}`. A full
+  tree grep of `dumper-7/Dumpspace/*.json` finds **zero** `ReplicationCondition` /
+  `COND_*` / `RepIndex` / `InitOnly` metadata. So the Init/Regular/LifetimeConditional
+  assignment **cannot be rebuilt from reflection alone** — only the flat member
+  *order* (ClassReps / declaration order) is source-determinable from the SDK.
+- **How sub-step 1 handles it:** `tools/iris_state_builder.py` builds the source-exact
+  ClassReps-order member list and the 3-state container, but classifies every member
+  as **Regular** by default (the correct Iris default for an un-trait-ed property,
+  lines 2939-2942) except `NetCullDistanceSquared` on Actor heirs (forced conditional).
+  The precise Init/Regular split is then derived **empirically from the wire** in the
+  sub-step-1 cross-validation harness (commit #2): initial-state blocks carry all
+  Init+Regular members unmasked; delta blocks carry only Regular members under the
+  change mask. Observed per-class membership under each block type populates
+  `IrisStateBuilder.STATE_OVERRIDES`.
+- **Risk:** If TYR sets `COND_InitialOnly`/`InitOnly` on any property, those members
+  would be mis-routed to Regular until the wire harness reclassifies them. Until the
+  cross-check runs, confidence on the *state split* is PROBABLE (source-discerned
+  default) and the *member order* is KNOWN (declaration order, confirmed equal to
+  offset order in the TYR dump).
+- **Close condition:** complete the empirical wire cross-check (commit #2) and confirm
+  Init-state blocks contain exactly the expected Init set; OR obtain the per-property
+  `ReplicationCondition` from the running binary / a richer Dumper-7 dump.
+
+---
+
 ## Caveat on the Phase-00 scaffold
 
 The Phase-00 `tools/bitreader.py` `read_bit` was **MSB-first**, which is
