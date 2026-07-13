@@ -90,6 +90,7 @@ tracker rather than silently treating it as confirmed."
 
 ### OA-06-2 — Iris `FReplicationReader` envelope refuted (option iii CLOSED); real carrier is a structured actor-bunch payload of UNKNOWN grammar
 
+
 **Status (2026-07-13, updated):** The pristine UE5.6 `FReplicationReader::Read`
 envelope (ReplicationReader.cpp:2924 — `[2-bit debug features][16-bit
 ObjectBatchCountToRead][if>0: 16-bit DestroyedObjectCount + destroy records]`)
@@ -204,6 +205,66 @@ and re-run the envelope scan against it.
   `FReplicationReader`/`UDataStreamManager` variant and re-run the scan, or
   (iii) find the Iris region under a different framing (e.g. NetBlob attachment
   path, or interleaved within a specific control channel's bunch).
+
+### OA-06-3 — U1: Family-A id namespace RESOLVED as u16-compacted Iris static handles; blob semantics remain OPEN (no anchor on wire)
+
+**Status (2026-07-14):** The U1 *id-namespace* sub-question is RESOLVED
+at CANDIDATE level (source-grounded + empirically cross-validated). The
+*blob semantic decode* (what the serialized state bytes mean) REMAINS OPEN
+because no static→class export table is present in these replay wire bytes.
+
+**Evidence (source):**
+- `UE/NetRefHandle.h`: `FNetRefHandle::GetId() = (Serial<<1)|Static`;
+  `Serial`=53 bits, `Static`=1 bit, `ReplicationSystemId`=10 bits →
+  64-bit value. Wire serialization is `WritePackedUint64`
+  (`SerializeIntPacked64`), NOT u16 (`ObjectNetSerializer.cpp:29-57`).
+- `IsStatic()` == ODD id; `IsDynamic()` == EVEN id (`NetRefHandle.h:60-64`).
+
+**Evidence (empirical, all 10 files, `tools/carrier_decode.py` +
+`tools/u1_probe*.py`):**
+- Family-A keys are **u16**: max key ≤ 65535 in every file (files
+  1/5/6/7/8/9 ≤ 9939; 2/3/4 ≤ 65535). → consistent with TYR's
+  carrier compacting static handles to u16, NOT the raw 64-bit varint.
+- **Odd parity 93.7%–100%, aggregate 98.77%** → matches the Iris
+  `IsStatic()` ODD invariant by overwhelming majority. The 1.23% even keys
+  are consistent with occasional dynamic (even) handles in the same stream.
+- **Phase-04 NetToken indices are a DIFFERENT space** (millions, even-parity
+  — e.g. 1099392, 222299456 in Checkpoint chunks). Empirically, the
+  intersection of Family-A keys and the NetToken index space is **0** across
+  all files. So "wire the Phase-04 handle cache and match keys" is NOT a
+  viable anchor — confirmed, not assumed.
+- Family-B (`cb`, 13B) lead u16 is even and has only **3 distinct values**
+  across files 2/3/4 (and 0% in A-space for files 5–9) → a small
+  fixed even-indexed table, NOT an object-id anchor. Also ruled out.
+- The spawn (first) bunch on a channel == an `E_0100` (N=1) record whose
+  body equals the channel's first Family-A body (T3: 16/19 channels share
+  key+body) → keys are PERSISTENT per-object ids; the body IS the object's
+  serialized state. But the body does NOT embed a class-path FString
+  (`u1_probe6`: only 1/90 real path hits, and that was an enum value), so
+  the key → class mapping is not recoverable from the wire bytes alone.
+
+**Conclusion:** U1's *id* question is answered — Family-A keys are Iris
+**static object handles**, compacted to u16 by TYR's carrier. The *semantic*
+decode of the body (positions, health, …) is BLOCKED on an external
+class anchor (the static-handle→class export table) that is **not present in
+these replay wire bytes** (it lives in Checkpoint chunks keyed by NetToken
+index, a different namespace). This matches the plan doc's explicit note that
+U1 "does NOT gate t7" but "blocks the downstream property-replication
+sub-steps." The downstream sub-steps (dirty-state, NetSerializers, FastArray)
+therefore remain OPEN until either (a) a Checkpoint-derived handle→class table
+can be cross-bridged to the u16 key space, or (b) TYR's carrier body format
+is reversed from the binary.
+
+**Validation artifact:** `tools/carrier_decode.py::familyA_key_invariant`
+asserts (non-tautologically) that 100% of keys fit u16 and the aggregate
+odd rate ≥95% (random ~50%); the hard assertion in `main()` prints
+`VERDICT: U1 key-namespace RESOLVED (CANDIDATE)` when both hold. This
+passed across all 10 files (commit 555303f).
+
+**Close condition (for full U1, blob semantics):** obtain a handle→class
+mapping bridgeable to the u16 key space (Checkpoint export table cross-ref,
+or TYR binary disassembly of the carrier body serializer), then decode ≥1 body
+to a semantically-plausible value within known level bounds.
 
 ---
 

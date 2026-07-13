@@ -195,3 +195,52 @@ Decision point: U1 cannot be closed statically with current tooling. Options:
   (c) Attempt to wire Phase-04 token export + handle observation into the real
       frame walker and build a genuine cross-anchor (largest effort, highest
       payoff if the id-namespace mismatch can be bridged).
+
+## ADDENDUM 3 (2026-07-14) — U1 id-namespace RESOLVED (source + empirical)
+
+The U1 dead-end is broken at the *id* level. The plan's option (c) ("wire
+Phase-04 token export + match keys") was tested and **refuted as a viable
+anchor** — but in doing so it surfaced the real explanation.
+
+### Source facts (UE5.6, in-repo `/UE`)
+- `UE/NetRefHandle.h`: `FNetRefHandle::GetId() = (Serial<<1)|Static`;
+  `Serial`=53 bits, `Static`=1 bit, `ReplicationSystemId`=10 bits → 64-bit
+  value, wire-serialized via `WritePackedUint64` (`SerializeIntPacked64`)
+  in `UE/Iris/Private/Iris/Serialization/ObjectNetSerializer.cpp:29-57` —
+  **NOT a u16**.
+- `IsStatic()` == ODD id; `IsDynamic()` == EVEN id (NetRefHandle.h:60-64).
+
+### Empirical (all 10 files; `tools/carrier_decode.py` + `tools/u1_probe*.py`)
+1. Family-A keys are **u16**: max ≤ 65535 in every file. Real 64-bit
+   `SerializeIntPacked64` ids would routinely exceed 65535 — so TYR's carrier
+   **compacts Iris static handles to u16**.
+2. **Odd parity 93.7%–100% (aggregate 98.77%)** — matches the Iris
+   `IsStatic()` ODD invariant by overwhelming majority. The ~1.23% even keys
+   are consistent with occasional dynamic (even) handles sharing the stream.
+3. **Phase-04 NetToken indices are a DIFFERENT space** (millions, even —
+   e.g. 1099392, 222299456, found in Checkpoint chunks). Intersection of
+   Family-A keys and the NetToken index space = **0** across all files. So
+   "wire the handle cache and match keys" is NOT an anchor. Confirmed.
+4. **Family-B lead u16 is even, only 3 distinct values** (files 2/3/4);
+   0% in A-space for files 5–9. A small fixed even-indexed table, NOT an
+   object-id anchor. Ruled out.
+5. Spawn (first) bunch on a channel == `E_0100` (N=1) record whose body
+   equals the channel's first Family-A body (T3: 16/19 channels share
+   key+body). Keys are **persistent per-object ids**; the body IS the object's
+   serialized state.
+
+### Conclusion
+U1's *id-namespace* question is RESOLVED (CANDIDATE, source-grounded):
+**Family-A keys are Iris static object handles, compacted to u16 by TYR's
+carrier.** The *blob semantic decode* (positions/health/…) REMAINS OPEN:
+no static→class export table is present in the ReplayData wire bytes (it lives
+in Checkpoint chunks keyed by NetToken index — a different namespace). This is
+exactly the plan doc's stated condition: U1 "does NOT gate t7" but "blocks
+the downstream property-replication sub-steps."
+
+### Validation artifact
+`tools/carrier_decode.py::familyA_key_invariant` asserts (NON-tautologically)
+100% of keys fit u16 AND aggregate odd-rate ≥95% (random ~50%). The hard
+assertion in `main()` prints `VERDICT: U1 key-namespace RESOLVED
+(CANDIDATE)` when both hold. It passed across all 10 files (commit 555303f).
+Blob-semantic close condition recorded as OA-06-3 in `open-assumptions.md`.
