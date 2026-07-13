@@ -50,7 +50,7 @@ This file is the single source of truth for project status. Update it **every ti
 | 03 — Bit-Level Primitives | ✅ Done (validated + merged + tagged) | `master` @ `phase03-complete` | 2026-07-12 |
 | 04 — Iris NetRefHandle / Replication Protocol Descriptors | ✅ Done (validated + merged + tagged) | `master` @ `phase04-complete` | 2026-07-13 |
 | 05 — Bunches & Channels | ✅ Done (validated + merged + tagged) | `master` @ `phase05-complete` | 2026-07-13 |
-| 06 — Property Replication | ⬜ Not started | | |
+| 06 — Property Replication | 🟨 In progress | | |
 | 07 — RPCs | ⬜ Not started | | |
 | 08 — Checkpoints | ⬜ Not started | | |
 | 09 — Regression Suite / Iteration | ⬜ Not started | | |
@@ -247,10 +247,11 @@ across all samples".
 - [ ] Static cross-check (no live debugging available) of descriptor/reader logic
 
 **Commits:**
+- [x] `docs(phase06): correct Iris source-of-truth paths to in-repo files (subset-aware)` (3b37e69)
 - [x] `feat(phase06): reimplement ReplicationStateDescriptorBuilder traversal` (9f0fdf7)
-- [x] `docs(phase06): record OA-06-1 (SDK lacks COND_* reflection metadata)` (893aaca)
+- [x] `docs(phase06): record OA-06-1 (SDK lacks COND_*/InitOnly reflection metadata)` (893aaca)
 - [x] `feat(phase06): Iris ReplicationStateDescriptorBuilder-backed data-stream decoder + self-test` (64228bf)
-- [x] `feat(phase06): source-faithful Iris envelope + DataStreamManager decoders; synthetic round-trip self-tests green` (this session — UNCOMMITTED on disk pending your call)
+- [x] `feat(phase06): source-faithful Iris envelope + DataStreamManager decoders; synthetic round-trip self-tests green` (8f8f8d3)
 - [ ] `feat(phase06): implement dirty-state/changed-member signaling decode`
 
 ---
