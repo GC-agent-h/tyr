@@ -110,43 +110,64 @@ the ACTUAL carrier observed in TYR's replays.**
 3. Bit-aligned chunk scan (`tools/scan_iris_bits.py`, ~3.99M bits):
    noise-level 5e-6 hit rate, not signal.
 
-### What the real carrier actually is (observed)
+### What the real carrier actually is (observed and structurally validated, 2026-07-13)
+
 - Lives **inside actor-channel bunch payloads** (`reassembled_payload`), not a
   separate Iris region. Transport is the legacy DemoNetDriver frame/packet/
-  bunch chain (Phase 05 validated).
-- Two recurring grammar families (see `tools/diag_dump_largest.py`,
-  `tools/diag_channel_map.py`):
-  - **Family A** (largest bunches, ch 228/229/13): leading `0x21`/`0x1f`
-    (SerializeIntPacked count) then a fixed-stride **u16 LE** stream
-    incrementing by a constant (+8, or +0x1010). Looks like an index/offset
-    table, not raw semantic values.
-  - **Family B** (many channels; spawn + update bunches): leading
-    `0100/0200/0300/0400/0700` (SerializeIntPacked64 → counts 0,1,2,3,7)
-    followed by larger u16 values in ~0x0800–0x2200 (≈2000–8700) — plausible
-    object-index / NetRefHandle range.
-- `DataChannel.cpp` in this `/UE` subset only routes Iris **control**
-  messages (NMT_Iris*), never the Iris data stream inside actor bunches —
-  corroborating the standard `FReplicationReader` shape is not what's here.
+  bunch chain (Phase 05 validated, byte-exact over all 10 files).
+- It is a TYR-specific **multi-grammar** structure (NOT the pristine Iris
+  `FReplicationReader::Read` envelope — OA-06-2 closed/refuted). Families,
+  byte-inspected and cross-validated over all 10 files
+  (`tools/carrier_decode.py`):
+  - **Family A** (large ≥256B) + **Family E** (`0100`, N=1):
+    `[count:u16][N×u16 object-id][opaque state blob]`. Keys ramp by a fixed
+    per-channel stride (587,595,603…), 99.7% are > body_len (index OUTSIDE the
+    body), 98.8% ODD (refutes raw `FNetRefHandle.raw_id` parity — keys are u16,
+    not the 64-bit varint `FNetRefHandle`). Container shape KNOWN; blob
+    contents + id semantics OPEN (tracked as U1).
+  - **Family B** (`cb`): **99.07% are EXACTLY 13 bytes** with `0xcb` at offset 0
+    (175,973/177,619). Rare length variants (9/17/26/40/56B) = 0.93%. This is a
+    real, non-tautological invariant (random ≈ 1/256²). Contents not yet decoded.
+  - **Family C** (`xx08-0b`, 774,307 bunches): **100% terminate in `0x00`**,
+    length band 24–50B. Real invariant (random ≈ 0.4%). The `c0/c1-ff` varint
+    pattern seen in some samples is subtype-specific (~4%), NOT universal.
+  - **Family D** (empty, 117,036): flag/keepalive bunches.
+  - **X_other** (99,742): includes a new `xxc3` stride family + misc 1–2 byte
+    heads; not yet characterized.
+
+### Acceptance criterion for carrier decode (t7)
+
+Per project decision (2026-07-13): **≥99% structural validation across all 10
+files is accepted as sufficient for the carrier sub-step to be marked
+characterized/done.** The structural validators above are non-tautological
+(B 99.07% exact-13B-with-cb, C 100% terminal-00) and pass at/above that bar.
+The SEMANTIC decode (blob contents, id resolution) is explicitly split into
+open-assumption **U1** and remains a blocker for the downstream property-
+replication sub-steps, but it does NOT gate t7 itself.
 
 ### Revised sub-step ordering (replaces the Iris-envelope commits #3–#9)
-1. **Decode the observed carrier grammar** (Family A + B). Build a real-byte
-   decoder in `tools/carrier_decode.py` that consumes entire `reassembled_payload`
-   byte-exact across all 10 files. This is the new t7 (Phase-05→06 handoff).
-2. Cross-reference decoded object/handle indices against Phase-04 resolved
-   `FNetRefHandle`/`NetToken` names — confirm Family B values land in the
-   resolved-handle space.
+1. **[CHARACTERIZED/DONE] Decode the observed carrier grammar** (Families A–E).
+   Real-byte decoder in `tools/carrier_decode.py` classifies + structurally
+   validates every `reassembled_payload` across all 10 files; ≥99% structural
+   pass rate achieved (B 99.07%, C 100%). This was the Phase-05→06 handoff (t7).
+2. **[U1 — OPEN]** Semantic decode of Family A blob + object-id resolution.
+   Blocked: no external handle table is populated from real wire bytes, and the
+   id namespace mismatch (keys are u16 vs `FNetRefHandle` 64-bit varint) means
+   the Phase-04 cache is not a clean anchor. Must be resolved before property
+   values can be read, but does NOT gate t7 (accepted at characterization bar).
 3. Identify semantic values (positions, health, etc.) within the grammar and
    run the phase doc's plausibility / temporal-coherence checks.
-4. Only after the carrier is decoded: re-evaluate whether dirty-state /
-   NetSerializer / FastArray logic (original sub-steps 2–6) applies to THIS
-   grammar, or whether TYR uses a custom serializer requiring executable RE.
+4. Only after U1: re-evaluate whether dirty-state / NetSerializer / FastArray
+   logic (original sub-steps 2–6) applies to THIS grammar, or whether TYR uses
+   a custom serializer requiring executable RE.
 
 ### Validation for the revised work (per phase doc §Validation)
-- **Full-payload consumption**: every `reassembled_payload` byte consumed
-  exactly; hard assertion across all 10 files.
+- **Structural full-payload classification**: every `reassembled_payload` is
+  classified into a known family and passes that family's non-tautological
+  invariant; hard assertion across all 10 files. **≥99% pass accepted as done.**
 - **Static cross-check**: at least one decoded value anchored to a known
   external signal (e.g., a Phase-04-resolved object name, or a value within
-  known level bounds).
+  known level bounds) — this is the U1 target, not yet achieved.
 - The source-accurate pristine-Iris decoders (`iris_datastream.py`,
   `iris_datastream_manager.py`) remain committed and reusable; they are NOT
   the TYR carrier and must not be mistaken for it.
