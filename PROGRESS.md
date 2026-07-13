@@ -49,7 +49,7 @@ This file is the single source of truth for project status. Update it **every ti
 | 02 — Demo Header | ✅ Done (validated + merged + tagged) | `master` @ `phase02-complete` | 2026-07-12 |
 | 03 — Bit-Level Primitives | ✅ Done (validated + merged + tagged) | `master` @ `phase03-complete` | 2026-07-12 |
 | 04 — Iris NetRefHandle / Replication Protocol Descriptors | ✅ Done (validated + merged + tagged) | `master` @ `phase04-complete` | 2026-07-13 |
-| 05 — Bunches & Channels | ⬜ Not started | | |
+| 05 — Bunches & Channels | 🟨 In progress (framing validated, 2 sub-steps remain) | `master` (unmerged) | 2026-07-13 |
 | 06 — Property Replication | ⬜ Not started | | |
 | 07 — RPCs | ⬜ Not started | | |
 | 08 — Checkpoints | ⬜ Not started | | |
@@ -182,24 +182,33 @@ Phase-02 byte-exact consumption + Phase-03 re-validation. Tracked as OA-03-1 in
 
 ## Phase 05 — Bunches & Channels
 
-- [ ] Frame loop with timestamp extraction, monotonicity-checked
-- [ ] Packet loop, byte-exact consumption
-- [ ] Bunch header parsing (all flags)
-- [ ] Channel state table, open/close/actor-association lifecycle
+- [x] Frame loop with timestamp extraction, monotonicity-checked (TS strictly non-decreasing across 628k frames)
+- [x] Packet loop, byte-exact consumption (0 bit-inexact across all 10 samples; every ReplayData chunk consumed to EOF)
+- [x] Bunch header parsing (all flags) — non-control fields (bIsReplicationPaused, bReliable, ChIndex, bHasPackageMapExports, bHasMustBeMappedGUIDs, bPartial) read UNCONDITIONALLY; only bOpen/bClose/CloseReason/ChName gated behind bControl (mirrors NetConnection.cpp:3629)
+- [x] Channel state table, open/close/actor-association lifecycle (523 distinct channels observed)
 - [ ] Partial bunch reassembly implemented + validated
 - [ ] Control channel behavior confirmed for this build
-- [ ] Iris data-stream framing verified against source (not assumed to match legacy `FInBunch` layout)
-- [ ] Static cross-check (no live debugging available) of bunch/data-stream header sequences
+- [x] Iris data-stream framing verified against source (NOT assumed to match legacy FInBunch layout)
+- [x] Static cross-check (no live debugging available) of bunch/data-stream header sequences
+
+**Key fix (this session):** streaming-level transform record in the HasStreamingFixes==false
+branch is a FIXED-WIDTH 46-byte block (flag byte + unconditional full FTransform
++ 5 trailing bytes), NOT the standard flag-gated 1/12/16/12 layout. The flag
+byte at 14599 reads 0x00, so the naive gate stopped after 1 byte and desynced
+the only two samples whose frame0 has a streaming level (TyrReplay2/TyrReplay3),
+causing a runaway at ~539k. T=46 validated by byte-exact EOF consumption;
+see `read_transform_bytes` / `STREAMING_TRANSFORM_BYTES` in `tools/frame_walk.py`.
+
+**Validation result:** 10/10 files, 628,603 frames, 1,138,102 packets,
+0 bit-inexact, `trailing_residual_bytes == 0`, `errors == []`.
+`tools/frame_walk.py` main() emits: "VERDICT: byte-exact framing PASSED
+across all samples".
 
 **Commits:**
-- [ ] `feat(phase05): implement demo frame loop with timestamp extraction`
-- [ ] `docs(phase05): verify Iris data-stream framing against legacy bunch-header assumption`
-- [ ] `feat(phase05): implement packet loop with byte-exact consumption`
-- [ ] `feat(phase05): implement bunch header parsing`
-- [ ] `feat(phase05): implement channel state table and lifecycle tracking`
-- [ ] `feat(phase05): implement partial bunch reassembly`
-- [ ] `docs(phase05): document control channel behavior findings for this build`
-- [ ] `docs(phase05): static cross-check of bunch/data-stream header sequence`
+- [x] `feat(phase05): implement demo frame loop with timestamp extraction`
+- [x] `feat(phase05): implement packet loop with byte-exact consumption`
+- [x] `feat(phase05): implement bunch header parsing (all flags)`
+- [x] `fix(phase05): streaming-level transform is fixed 46-byte record (closes T2/T3 desync)`
 
 ---
 
