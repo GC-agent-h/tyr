@@ -243,6 +243,21 @@ because no static→class export table is present in these replay wire bytes.
   (`u1_probe6`: only 1/90 real path hits, and that was an enum value), so
   the key → class mapping is not recoverable from the wire bytes alone.
 
+**2026-07-14 — OA-06-3 "Checkpoint cross-ref" path RESOLVED NEGATIVE.** Phase 08
+framing (`tools/checkpoint_decode.py`, byte-exact across all 10 files) shows
+every Checkpoint path FString's prefix is a UObject **export index**
+(range 0..~65k, ~30% odd) — a namespace DISJOINT from Family-A's compacted
+u16 static handles (~99% odd, range ~1..few-thousand). Each checkpoint
+re-exports the DYNAMIC live object path set (FULL snapshot; blob path-set sizes
+grow AND shrink across checkpoints in 9/10 files), not a stable key→class
+dictionary. => no Family-A-key→path lookup table exists on the wire; the
+Checkpoint route CANNOT bridge U1 from replay bytes.
+
+**Remaining U1 close condition:** only (b) — **TYR binary disassembly of the
+carrier body serializer** — could now close U1. That is ENVIRONMENT-BLOCKED:
+no TYR executable exists in this environment (`/dumper-7` holds only SDK
+headers). U1 remains OPEN; Phase-06 downstream property sub-steps stay gated.
+
 **Conclusion:** U1's *id* question is answered — Family-A keys are Iris
 **static object handles**, compacted to u16 by TYR's carrier. The *semantic*
 decode of the body (positions, health, …) is BLOCKED on an external
