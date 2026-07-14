@@ -316,11 +316,11 @@ across all samples".
 ## Phase 08 — Checkpoints
 
 - [x] Checkpoint chunk framing implemented
-- [x] Full-checkpoint decoding implemented + validated in isolation
-- [x] Delta-checkpoint mode confirmed/ruled out via the Phase 2 flag and empirical cross-check
-- [ ] Delta-application logic implemented (incl. destroyed-actor handling)
-- [ ] Stream-replay cross-validation harness built, matching across all checkpoints in all 10 files (this is the primary substitute for a live diff on this project — no live ground truth needed)
-- [ ] Static cross-check (no live debugging available) of a checkpoint save/load path
+- [x] Full-checkpoint decoding implemented + **structurally** validated in isolation (94/94 consistent object counts, FString-free trailing partition). **Retraction 2026-07-14:** the prior "byte-exact" claim is overstated — no gate asserts consumption to chunk `TotalSize`; a ~25-byte prefix after the 3 FStrings (not 12 B as UE5.6) is unmodeled. See `docs/phase08-static-crosscheck.md` + OA-08-1 amendment.
+- [x] Delta-checkpoint mode confirmed/ruled out via the Phase 2 flag and empirical cross-check (RULE OUT: flag not set, 94/94 self-contained full snapshots)
+- [x] Delta-application logic implemented (incl. destroyed-actor handling) — **N/A**: delta mode ruled out, so no delta-decoding path exists; item closed as not-applicable per phase doc clause ("only if delta mode is confirmed active").
+- [ ] Stream-replay cross-validation harness built, matching across all checkpoints in all 10 files — **BLOCKED** by U1 (OA-06-3): trailing Iris state block cannot be named without the TYR class layout / handle→class export table (not present in replay bytes). Same blocker as Phase 06.
+- [x] Static cross-check (no live debugging available) of a checkpoint save/load path — **DONE** (`docs/phase08-static-crosscheck.md`): traced `LoadCheckpoint`/`WriteDemoFrame` against real bytes; source-faithful UE5.6 envelope decoder desyncs 94/94 (empirical proof TYR checkpoint format is CUSTOM).
 
 **Commits:**
 - [x] `feat(phase08): implement checkpoint chunk framing`
@@ -344,6 +344,13 @@ across all samples".
 > reference — do NOT re-introduce until it passes the same gate. This is a
 > textbook anti-tautology catch: the rewrite's CLAIMED "94/94 exact" was
 > refuted by actually running it (SOUL.md: claim ≠ evidence).
+>
+> **2026-07-14 follow-up correction:** the committed (`55a0e56`) decoder is a sound
+> *structural* anchor but its own "94/94 byte-exact-validated" VERDICT was also
+> overstated — no gate asserts consumption to chunk `TotalSize`, and a ~25-byte
+> prefix after the 3 FStrings (not 12 B as pristine UE5.6) is unmodeled. TYR's
+> checkpoint format is CUSTOM (source-faithful UE5.6 envelope desyncs 94/94).
+> See `docs/phase08-static-crosscheck.md` and the OA-08-1 retraction below.
 
 ---
 

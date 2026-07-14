@@ -320,13 +320,28 @@ characterized (structural pass ≥99%, semantic decode split OPEN as U1).
 
 **Validation artifact:** `tools/checkpoint_full.py` asserts (non-tautologically)
 G1 header invariants (Group=='checkpoint', even Metadata), G2 export-list
-self-termination, G3 zero-FString trailing partition, and G4 full chunk
-consumption. Passed 94/94 checkpoints.
+self-termination, G3 zero-FString trailing partition. **RETRACTION (2026-07-14):**
+the previously-claimed G4 "full chunk consumption to TotalSize" is **NOT** actually
+asserted in `decode_full_checkpoint` — the partition is definitional (trailing =
+remainder) and a ~25-byte prefix region after the 3 FStrings is silently dropped
+(header FStrings end at offset 37; first export-list head FString `/TyrMap…`
+begins at offset 68). So "byte-exact-validated 94/94" was overstated. The
+structural decode is real and consistent (object counts 707–1548, FString-free
+trailing in all 94), but consumption to `TotalSize` is NOT proven.
+
+**2026-07-14 static cross-check (docs/phase08-static-crosscheck.md):** the
+source-faithful UE5.6 `LoadCheckpoint` envelope (3 FStrings + `u64 PacketOffset`
++ `i32 LevelForCheckpoint`, then demo-frame body) is **empirically refuted** — a
+source-faithful decoder desyncs on 94/94 checkpoints with garbage multi-MB reads
+(the UE5.6 `u64` field does not parse; it reads as 128849018910000). This confirms
+TYR uses a **CUSTOM checkpoint format**, not pristine UE5.6. The committed decoder
+is a sound *structural* anchor but is not byte-exact to `TotalSize`.
 
 **Close condition:** same as OA-06-3 — obtain a handle→class mapping bridgeable
 to the wire namespaces, or reverse the Iris state-blob serializer from the TYR
 binary, then decode ≥1 trailing-block state record to a semantically-plausible
-value.
+value. (Also, to restore the "byte-exact" claim, model the ~25-byte prefix region
+and assert consumption to `TotalSize`.)
 
 ---
 
