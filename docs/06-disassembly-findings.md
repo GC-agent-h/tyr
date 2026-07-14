@@ -76,16 +76,77 @@ the Family-A reference block. To close U1 we must:
   (b) extract per-member NetSerializer widths from the property-state serializer
       (disassemble `ReplicationOperationsInternal` / the `ch=53/25` blob writer).
 
-## 4. Next disassembly target (not yet executed)
+## 4. Function-level disassembly: what worked, what is blocked
 
-Pinpoint the function that emits the `SerializeIntPacked(count)` + per-
-object block by:
-  1. Locating `SerializeIntPacked` (distinctive varint loop: `test al,al / jnz`
-     for the 7-bit-group continuation) — unique, easy to find in `.text`.
-  2. Tracing its callers into the bundle writer (near `ReplicationWriter.cpp`
-     @0x96c2260 and `ReplicationOperationsInternal.cpp` @0x96bca40).
-  3. Extracting the per-member serialization dispatch to learn exact
-     NetSerializer bit-widths for the property-state blob.
+**Module localization — DONE (two independent methods):**
 
-This is the remaining work to make `tools/u1_decode.py` produce a validated
-full-consumption + plausible decode (Phase 06 validation gates #1 + #3).
+*Method A — embedded PDB path strings.* 44 Iris `*.cpp` `__FILE__` strings
+survive in `.rdata` (e.g. `ReplicationOperationsInternal.cpp` @ file 0x96bca40,
+in-mem VA `0x1496BD840`; `ReplicationWriter.cpp` @0x96c2260; `ReplicationReader`
+@0x96bd070; `ObjectReplicationBridge` @0x96b6440; `ArrayPropertyNetSerializer`
+@0x96c3eb0). ImageBase=`0x140000000`, `.text` VA=0x1000..0x945F000, `.rdata`
+VA=0x945F000.
+
+*Method B — `.reloc` DIR64 cross-references.* Parsed the full base-relocation
+table (1,752,725 DIR64 entries; 550,639 distinct target VAs). Confirmed the
+binary is dense with Iris **serializer function-pointer tables**: 17,648 runs
+of >=4 contiguous absolute-VA pointers into `.text`, 15,940 with >=6 entries.
+The largest (`RVA=0x9461348`, 39,629 entries) is the UE vtable/name-dictionary
+region; the smaller tables (8–57 entries, `RVA 0x94AE9C0`…) are the per-type
+NetSerializer dispatch tables (`Serialize`/`Deserialize`/`Quantize`/
+`Dequantize`/`Clone` stubs). These ARE the per-type serializer implementations
+U1 needs for exact on-wire widths.
+
+**Function-level anchoring — BLOCKED (real, explained):** With `/GL` (LTCG)
+Shipping, the `__FILE__` strings are **dead data** — they are referenced only
+by compiled-out `check`/`UE_LOG` metadata, NOT by any live `lea reg,[rip+X]`
+or `.reloc` entry. Direct string→function mapping therefore yields 0 hits (both
+the `lea` scan and the reloc-string-target scan confirm this). So a specific
+serializer function cannot be trivially pinned from its `__FILE__` string alone.
+The correct deep-dive to identify the exact per-type `Serialize`:
+  1. Take a serializer vtable run from §4 (e.g. `RVA=0x94B2530`, 51 entries).
+  2. Disassemble each pointed `.text` function; classify by shape (e.g. the
+     `FVector` serializer has a fixed 3×N-bit quantize loop; `uint8` is a
+     `ReadBits(N)`; `FName` is an `SerializeIntPacked` name-index + number).
+  3. Cross-link to the SDK descriptor (`out/sdk_index.json`) by matching the
+     `FReplicationStateMemberSerializerDescriptor`'s `SerializerConfig` layout
+     (the `FVectorNetSerializerConfig` carries `NbBitsPerComponent` etc.) to the
+     SDK member `ctype`/`size`. This bridges SDK class → binary serializer
+     widths WITHOUT needing the class name on the wire.
+
+## 5. Replay carries NO class-name anchor (confirmed 3 independent ways)
+
+To close U1 we need wire-key → class. I re-verified from the TyrReplay1 bytes
+that this anchor is absent on the wire (consistent with prior Phase-08
+"no external anchor" conclusion):
+
+  1. **Actor open bunches** (303 of them, ch 1..N): payloads are 12–128 B,
+     numeric only (e.g. `06fb52300887c144800000ea880100`). `ch_name` is the
+     hardcoded channel *type* name (name_index 102 = "Actor"), NOT the class.
+     **No class-path FString** in any open-bunch payload.
+  2. **Package-map export bunches** (78 of them, `b_has_package_map_exports`):
+     payloads carry only numeric NetGUID→export-id pairs. **No class-path
+     FString** in any export bunch.
+  3. **Whole-ReplayData FString scan**: 0 length-prefixed ASCII strings matching
+     `Game/`, `/Script/`, `*.{uclass}_C`, or `Tyr*` anywhere in actor-open or
+     export payloads.
+
+=> The class name lives in the binary (CppSDK has all 7,372 classes; the
+`.usmap` is the cooked Iris descriptor export but is proprietary/undecodable).
+The replay's numeric export indices map to classes only via the binary's cooked
+package data. **Therefore the U1 class-naming closure requires the binary
+descriptor-registry bridge (§4 deep-dive), not further replay-byte hunting.**
+
+## 6. Status of U1
+
+* KNOWN (high confidence): carrier body is a hierarchical object bundle;
+  Family-A `E_0100`/N=2 = object-reference resolution block; `A_large` N=31
+  (ch=13) = root actor + 30 subobjects (all ODD static handles) with a 1936 B
+  state blob; ch=53/25 = the per-member property STATE serializer.
+* KNOWN: no class-name anchor on the wire (3 confirmations).
+* KNOWN: all Iris serializer modules + the serializer vtable region located in
+  the binary.
+* CANDIDATE / OPEN: exact per-member NetSerializer bit-widths for the property
+  STATE blob — requires the §4 binary descriptor-registry bridge (function-level
+  deep-dive, not yet executed). Until that bridge exists, `u1_decode.py` cannot
+  produce a validated full-consumption + plausible decode, so U1 is NOT closed.
