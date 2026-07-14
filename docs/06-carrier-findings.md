@@ -389,3 +389,33 @@ sub-step 3. It does NOT unblock the downstream property-decode sub-steps
 (dirty-state/NetSerializer/FastArray), which need the U1 anchor to map a smooth
 byte-region to a typed field. The localized regions are the evidence base for
 that future work.
+
+## ADDENDUM 7 (2026-07-14) — Family C temporal-coherence LOCALIZATION (sub-step 3)
+
+Companion to ADDENDUM 6 for Family C (the dominant family, 774k bunches), using
+the SAME anchor-free method (`tools/familyC_temporal.py`), grouped by the
+Bunch's stable per-actor `ch_index` (no explicit key in the bit-packed payload;
+ADDENDUM 5).
+
+**Method:** for each channel persistent across ≥30 frames, localize byte-offsets
+where per-frame |Δ| ≤ 2 in ≥90% of steps; a run of ≥4 contiguous offsets =
+candidate state channel. Validation via the same RANDOM-control differential.
+
+**Result (all 10 files, 167 persistent channels):**
+- Front-region REAL smooth-run rate = **18.56%** (RANDOM = 0.00%).
+- Deeper-body (exclude first 8 bytes = subtype + 0xc0 prefix + per-channel
+  front documented in ADDENDUM 5): REAL = **18.88%** (27/143), RANDOM = 0.00%.
+  → The smooth state lives in the BIT-PACKED BODY, not merely the header.
+- → Decision: VALIDATED (real ≫ random; random never yields a 4B smooth run).
+  The signal is WEAKER than Family A's 29.8% — a PREDICTED consequence of
+  bit-packing (ADDENDUM 5) scattering a smoothly-changing scalar across byte
+  boundaries, reducing contiguous-smooth runs. This corroborates, rather than
+  contradicts, the bit-packed-stream finding.
+
+**What this proves:** both major carrier families (A and C) carry per-object /
+per-actor temporally-coherent state surfaces, localizable at byte level without
+any external anchor. Family A is byte-aligned (stronger signal); Family C is
+bit-packed (weaker contiguous signal but present in the body). NAMING the
+regions (position/health/rotation) remains BLOCKED (U1). The achievable,
+anchor-free portion of sub-step 3 is now DONE for both families; the remaining
+gap is U1 (external property-descriptor anchor) for field typing.
