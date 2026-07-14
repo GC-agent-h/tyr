@@ -283,6 +283,53 @@ to a semantically-plausible value within known level bounds.
 
 ---
 
+## Phase 08 — Checkpoints
+
+### OA-08-1 — Checkpoint trailing state block is Iris-encoded (env-blocked, parallel to U1)
+
+**Status (2026-07-14):** The Checkpoint chunk is decoded into 4 sections (header
+FStrings / export-list front-matter / object-list `[HDR][path FString][payload]` /
+trailing state block). Sections 1–3 are byte-exact-validated across all 10 files
+(94 checkpoints). The **trailing state block** (≈16k–55k B, FString-free, 0
+embedded path FStrings across all 94 checkpoints) is the per-object replicated
+property-state serialization — structurally a continuous Iris `NetSerializer`
+blob (observed: zero-padded state buffers + subobject-handle lists
+`03 ?? ?? 01` patterns, identical grammar to the Phase-06 Family-A/B/C carrier
+body).
+
+**What validates the partition instead of source:** the trailing block contains
+**ZERO path FStrings across all 94 checkpoints** (`tools/checkpoint_full.py` gate
+G3). A spurious object-list/trailing boundary would leak real object-path
+FStrings into the trailing region; the observed 0 count is the non-tautological
+proof the partition is real. Object-list tiling to the trailing start is further
+confirmed by the clean payload=`-bytes-to-next-anchor` framing.
+
+**Why the trailing block is NOT semantically decoded:** it is the SAME territory
+as Phase-06 **U1 (OA-06-3)** — Iris `NetSerializer` property state that requires
+the TYR class layout / handle→class export table to name. No such anchor is
+present in the replay wire bytes (the Checkpoint object path set is keyed by
+UObject export index, a namespace disjoint from Family-A's u16 static handles;
+the OA-06-3 Checkpoint cross-ref path was RESOLVED NEGATIVE). TYR binary
+disassembly is ENVIRONMENT-BLOCKED (`/dumper-7` holds only SDK headers).
+
+**Risk:** the FULL-CHECKPOINT replay state (object-list + trailing state) cannot
+be turned into named property values without the env-blocked anchor. The
+structural decode (sections 1–3 + partition) IS complete and validated; only the
+trailing block's *content* is OPEN. This mirrors exactly how Phase-06 t7 was
+characterized (structural pass ≥99%, semantic decode split OPEN as U1).
+
+**Validation artifact:** `tools/checkpoint_full.py` asserts (non-tautologically)
+G1 header invariants (Group=='checkpoint', even Metadata), G2 export-list
+self-termination, G3 zero-FString trailing partition, and G4 full chunk
+consumption. Passed 94/94 checkpoints.
+
+**Close condition:** same as OA-06-3 — obtain a handle→class mapping bridgeable
+to the wire namespaces, or reverse the Iris state-blob serializer from the TYR
+binary, then decode ≥1 trailing-block state record to a semantically-plausible
+value.
+
+---
+
 ## Caveat on the Phase-00 scaffold
 
 The Phase-00 `tools/bitreader.py` `read_bit` was **MSB-first**, which is
