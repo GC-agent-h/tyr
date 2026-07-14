@@ -52,7 +52,7 @@ This file is the single source of truth for project status. Update it **every ti
 | 05 — Bunches & Channels | ✅ Done (validated + merged + tagged) | `master` @ `phase05-complete` | 2026-07-13 |
 | 06 — Property Replication | 🟨 In progress | | |
 | 07 — RPCs | ⬜ Not started | | |
-| 08 — Checkpoints | ⬜ Not started | | |
+| 08 — Checkpoints | 🟨 In progress | | |
 | 09 — Regression Suite / Iteration | ⬜ Not started | | |
 
 Status values: `⬜ Not started` / `🟨 In progress` / `✅ Done (validated + merged + tagged)`.
@@ -330,6 +330,20 @@ across all samples".
 - [ ] `feat(phase08): implement delta-application logic incl. destroyed-actor handling`
 - [ ] `test(phase08): stream-replay vs checkpoint-decoded cross-validation harness`
 - [ ] `docs(phase08): static cross-check of a checkpoint save/load path`
+
+> **Reconciliation note (2026-07-14):** The Phase 08 overall-status row was
+> drifting as "⬜ Not started" while 3 sub-steps were already committed and
+> validated (commits `d7e3f03`, `55a0e56`, `9a1e578`). Row corrected to
+> "🟨 In progress" to match git reality and the detailed checklist. Also
+> resolved a working-tree hazard discovered during reconciliation: an
+> uncommitted `tools/checkpoint_full.py` rewrite (docstring claiming
+> "94/94 byte-exact") was found BROKEN on actual execution (0/94,
+> `read_bytes past end` on garbage 1–4 MB reads). It was reverted to the
+> validated committed version (`55a0e56`, re-run green: 94/94 byte-exact).
+> Broken rewrite preserved at `/tmp/checkpoint_full_broken_rewrite.py` for
+> reference — do NOT re-introduce until it passes the same gate. This is a
+> textbook anti-tautology catch: the rewrite's CLAIMED "94/94 exact" was
+> refuted by actually running it (SOUL.md: claim ≠ evidence).
 
 ---
 
