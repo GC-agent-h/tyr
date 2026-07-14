@@ -139,14 +139,26 @@ descriptor-registry bridge (§4 deep-dive), not further replay-byte hunting.**
 
 ## 6. Status of U1
 
-* KNOWN (high confidence): carrier body is a hierarchical object bundle;
-  Family-A `E_0100`/N=2 = object-reference resolution block; `A_large` N=31
-  (ch=13) = root actor + 30 subobjects (all ODD static handles) with a 1936 B
-  state blob; ch=53/25 = the per-member property STATE serializer.
-* KNOWN: no class-name anchor on the wire (3 confirmations).
+* KNOWN (high confidence): the Family-A `A_large` `ch=13` body (1936 B, N=31 odd
+  static keys = root + 30 subobjects) is **NOT a single flat class state**. A
+  SDK-descriptor-driven bit decoder (`tools/u1_bridge.py`, documented UE5.6 Iris
+  NetSerializer widths, brute-force over all 7,372 SDK classes) achieved
+  **0 exact AND 0 near (<=64-bit-slack) full-consumption matches** against the
+  1936 B blob. This is a REAL negative result (random/flat-class layouts do not
+  all miss by >64 bits), confirming the blob is a *recursive hierarchical
+  bundle* (root object record + per-subobject state records), not one class's
+  initial state. The per-subobject classes are unknown (no wire anchor).
+* KNOWN: no class-name anchor on the wire (3 confirmations, §5).
 * KNOWN: all Iris serializer modules + the serializer vtable region located in
-  the binary.
-* CANDIDATE / OPEN: exact per-member NetSerializer bit-widths for the property
-  STATE blob — requires the §4 binary descriptor-registry bridge (function-level
-  deep-dive, not yet executed). Until that bridge exists, `u1_decode.py` cannot
-  produce a validated full-consumption + plausible decode, so U1 is NOT closed.
+  the binary (§4).
+* **SUSPECT / RETRACTED (was "SerializeIntPacked(75) reference block"):** the
+  internal byte framing of `E_0100`/`A_large` bodies is NOT yet determined from
+  data. The `4b00` head cannot be `SerializeIntPacked(75)` count (E_0100 bodies
+  are 36 B; 75 records don't fit), and candidate recursive frames (u16
+  objIdx+refCount+8 B records) consume only 5 B then desync. The exact on-wire
+  framing requires the binary serializer deep-dive (§6), not data-guessing.
+* CANDIDATE / OPEN: exact per-member NetSerializer bit-widths + the bundle's
+  record framing — requires the §6 binary descriptor-registry bridge
+  (function-level deep-dive, not yet executed). Until that bridge exists,
+  `u1_decode.py` cannot produce a validated full-consumption + plausible decode,
+  so U1 is NOT closed.
