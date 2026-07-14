@@ -287,8 +287,8 @@ across all samples".
 - [x] `feat(phase06): add Family-A key-invariant validator proving U1 static-handle interpretation` (555303f)
 - [x] `feat(phase06): add Family-B structural decoder (cb|u16 tag|04|flag|u8[8]) + Family-C falsification control` (892cf79)
 - [x] `docs(phase06): record Family-C internal-frame characterization (ADDENDUM 5); sub-step 3 — bit-packed serial stream, naive sub-entry hypothesis held-out-refuted`
-- [x] `feat(phase06): add Family-A temporal-coherence localizer (familyA_temporal.py) — differential control, REAL 29.8% vs RANDOM 0.0%`
-- [x] `feat(phase06): add Family-C temporal-coherence localizer (familyC_temporal.py) — by ch_index, REAL 18.9% vs RANDOM 0.0%`
+- [x] `feat(phase06): add Family-A temporal-coherence localizer (familyA_temporal.py) — differential control, REAL 29.8% vs RANDOM 0.0%` (`bbf08f6`)
+- [x] `feat(phase06): add Family-C temporal-coherence localizer (familyC_temporal.py) — by ch_index, REAL 18.9% vs RANDOM 0.0%` (`4aa56d9`)
 
 ---
 
