@@ -1,113 +1,81 @@
 # Phase 06 — Todo 7: U1 bundle wire grammar (binary deep-dive)
 
-STATUS: IN PROGRESS (2026-07-14). Not yet closed. Validated negatives so far;
-no validated positive decoder yet.
+STATUS: IN PROGRESS (2026-07-14). NOT closed. Validated negatives only.
 
-## What is known (PROVEN)
-- The TYR `.usmap` is a real, fully-parsed runtime type table: 57,561 names,
-  2,659 enums, 14,050 structs (606 TYR-specific). [tools/usmap_parse.py,
-  out/usmap_schema.json]
-- A single-class (flat or recursive) decode of the 1936B ch=13 blob against
-  the FULL .usmap struct set yields ZERO full-consumption matches
-  (tools/u1_decode_usmap.py, MODE2: 0/5347). => the blob is a HIERARCHICAL
-  OBJECT BUNDLE, not one class's serialized state. (todo 8, validated
-  negative.)
-- The 1936B blob is a ONE-TIME initial snapshot: ch=13 appears in 90 frames
-  with 86 distinct bodies; the 1936B form occurs once (frame 1), and later
-  frames carry 32..174B deltas. => initial vs delta path is real on the wire.
+## Source-verified Iris (UE5.6) per-type SERIALIZER grammar
+Read directly from /home/gcurr/tyr/UE/Iris (the verified UE5.6 tree):
+- Bit stream: LSB-first, 32-bit little-endian words (NetBitStreamReader.cpp:54-99).
+  INTEL_ORDER32 is a no-op on x86, so ReadBits reads LSB-first within each
+  4-byte word. This CONFIRMS the wire is pure bit-packed (not byte/varint).
+- bool: 1 bit (BoolNetSerializer.cpp:38).
+- int/uint of N bits: 1-bit isZero-opt when N>=16, then N bits
+  (IntNetSerializerBase.h:37-57; ZeroValueOptimizationBitCount=16).
+- enum: BitCount = ceil(log2(range)), same zero-opt, value offset by enum min
+  (InternalEnumNetSerializers.cpp:49 + IntNetSerializerBase).
+- float: 1-bit isNonZero then 32-bit IEEE, or just 1 bit if zero
+  (FloatNetSerializers.cpp:78-96). EXPLAINS the `0,0` markers in earlier
+  varint streams (the zero-val-opt bit).
+- double: 1-bit isNonZero then 64 bits (FloatNetSerializers.cpp:117-142).
+- array: 1-bit empty marker, else count(ElementCountBitCount) + elements
+  (ArrayPropertyNetSerializer.cpp:81-117).
+- quantized vector: PackedVectorNetSerializers.cpp (per-component scale bits).
 
-## Empirical observations (OBSERVATIONS, not yet hypotheses — need source/anvil)
-Replay: sample/TyrReplay1.replay. Family-A/E bunches extracted via
-frame_walk + carrier_decode (same extraction as prior phases).
+## Stock Iris OBJECT ENVELOPE (read for reference; FALSIFIED for TYR blob)
+Per FReplicationWriter::WriteObjectAndSubObjects (ReplicationWriter.cpp:2744-2840)
++ SerializeObjectStateDelta (2508-2535), a batch = for each subobject:
+  WriteNetRefHandleId(handle) [packed uint64, only if IsSubObject]
+  + destroy-header (GetDestroyHeaderFlagsBitCount bits)
+  + bHasState(1b) -> HasState sentinel(if debug)
+  + bIsInitialState(1b) -> bDeltaCompressionEnabled(1b) -> CreatedBaselineIndex(2b)
+  + WriteNetRefHandleCreationInfo (CLASS PATH -> usmap struct mapping!)
+  + SerializeObjectStateDelta: LastAckedBaselineIndex(2b) + SerializeWithMask
+    (changemask = all-ones for initial state via GetInitialChangeMask.SetAllBits,
+     ReplicationWriter.cpp:519-524 + 613) + member state bits.
 
-1. `A_large` size classes (all 10 files consistent shape):
-   - n=31, body=1936B : 1 occurrence (ch=13, initial snapshot)
-   - n=2,  body=39/47B : 490 occurrences (clean two-subobject delta case)
-   The n=2 bodies are the tractable decode target.
+## FALSIFIED hypotheses (validated negatives — these are real findings)
+H1. TYR blob = stock Iris `WriteObjectAndSubObjects` batch output.
+    FALSIFIED (tools/iris_decode.py walk): reading the blob as
+    [WriteNetRefHandleId + destroy-hdr + bHasState + ...] decodes handles
+    `12,73,40,...` that DO NOT match the carrier header's `595,603,...`,
+    and bHasState is mostly 0 (an initial-state batch must be all-1s).
+    => TYR does NOT emit the stock Iris object envelope.
 
-2. n=2 body keys are a stable subobject PAIR, e.g. [595, 603] (ch=13/30/35/45/46),
-   [1611,1611] (ch=53), [595,1259] (ch=51). The two static handles identify the
-   two subobjects whose state is bundled. Per OA-06-2, these are Iris static
-   handles (odd => static; 98%+ odd).
+H2. 1936B blob = 31 fixed 499-bit subobject records, each starting with an
+    all-ones changemask (initial state).
+    FALSIFIED (tools/_probe_lead1.py): the 499-bit blocks begin with
+    `0,0,1,1`-style bits, zerofrac ~0.77, NO all-ones leading run. The 499
+    figure was pure arithmetic (15488/31), not structural evidence.
 
-3. IntPacked-linearization of a typical n=2 body (ch=13, frame 5):
-   75, 0, 672008, 2305, 0, 12354, 75, 544, 1212416, 0, 70664, 1214464, 0, 8,
-   554, 1217536, 0, 0
-   - `75` (0x4b) recurs as a mid-stream delimiter in 95/490 n=2 bodies.
-     The remaining 395 start with other lead bytes (229, 133, 53, 213, 180, 11,
-     69, 65, 117, ...). => `75` is a record-TYPE tag / subobject-record marker
-     for a specific sub-record subtype, NOT a universal subobject delimiter.
-   - Values cluster: small ints (0..2305), large ints (672008, 1212416,
-     1214464, 1217536 — these look like SERIALIZED FLOATS: 1212416 = 0x128400
-     is not a clean IEEE32, but 0x4980ee00/0x4980... patterns recur; needs
-     bit-level (not intpacked) decode).
-   - Trailing `0, 0` in many bodies: likely a terminator / end-of-state marker.
+H3. (prior, 2026-07-13) Single flat/recursive usmap struct decodes the blob.
+    FALSIFIED (bb90e80/9aa9bf1): Mode2 = 0/5347; Mode1 "hits" tautological.
 
-4. IMPORTANT CORRECTION of the prior "count:u16 + N*u16 + body" framing: the
-   `count` is the number of subobject HANDLES, and each handle indexes a
-   subobject whose state is serialized as a SEPARATE sub-record inside the body
-   (not a flat concatenation). The body is a SEQUENCE OF SUBOBJECT RECORDS, one
-   per handle, each with its own internal header (the recurring `75`/type tag).
+## What is KNOWN vs UNKNOWN (honest state)
+KNOWN:
+  - usmap is a real runtime schema anchor (14,050 structs) but does NOT by
+    itself close U1 (H3).
+  - The carrier is a hierarchical object bundle: header [u16 count][N u16
+    handles] + blob (OA-06-2, carrier_decode.py).
+  - Iris per-TYPE serializer bit-grammar (above) — verified from engine src.
+  - TYR does NOT use the stock Iris object envelope for this blob (H1,H2).
+UNKNOWN (the actual U1 gap):
+  - TYR's CUSTOM per-subobject wire envelope: how subobjects are delimited in
+    the blob, and how each subobject's handle (from header) maps to a usmap
+    struct (the type/class mapping). The stock Iris CreationInfo (class path)
+    is NOT present in the TYR framing, so the usmap<-handle binding is the
+    missing link.
+  - Whether Iris per-type serializers are even used inside the blob, or TYR
+    uses an entirely separate serialization for the payload.
 
-## Binary Iris module anchor map (authoritative, from PDB path strings)
-These are the .rdata RVA positions of embedded PDB path strings for the Iris
-replication modules in `Binaries/Win64/TyrClient-Win64-Shipping.exe`. They
-localize the compiled code region for each module (coarse landmark; exact
-function offsets need the .reloc serializer tables). Verified present:
-
-  Engine/Private/Net/Iris/ReplicationSystem/ReplicationSystemUtil.cpp  0xa08bc00
-  Engine/Private/Net/Iris/.../DataStreamChannel.cpp                   0xa089c70
-  Engine/Private/Net/Iris/ReplicationSystem/EngineReplicationBridge.cpp 0xa089e90
-  Engine/Private/Net/Iris/ReplicationSystem/NetActorFactory.cpp       0xa08a820
-  Engine/Private/Net/Iris/ReplicationSystem/NetSubObjectFactory.cpp    0xa08b140
-  Engine/Private/DataReplication.cpp                                  0x9f55da0
-  Engine/Private/GameFramework/CharacterNetworkSerializationPackedBitsNetSerializer.cpp 0x9f8fe90
-  Engine/Private/Engine/HitResultNetSerializer.cpp                    0x9f8bc40
-  Engine/Private/GameFramework/UniqueNetIdReplNetSerializer.cpp        0x9f95270
-
-NOTE: the trailing QWORD runs after each path string (e.g. `0x0100...E&A`
-patterns) are the vtable/serializer dispatch pointers for that module —
-this is where the per-type NetSerializer Serialize/Deserialize stubs live,
-keyed by the 17,648 .reloc-derived function-pointer tables.
-
-The `CharacterNetworkSerializationPackedBitsNetSerializer` module maps
-DIRECTLY to the `CharacterNetworkSerializationPackedBits` struct seen in the
-usmap schema (606 TYR structs + UE primitives). This is the bridge point:
-that NetSerializer's bit-width is exactly what we need to decode the
-per-subobject records.
-
-## Source-research cross-check (UE5.6)
-A source-research subagent is reading /home/gcurr/tyr/UE to fix the EXACT
-Iris snapshot/initial-state wire grammar (change-mask bits, member order,
-per-type widths, subobject batching). Its findings will pin the disassembly
-target precisely so todo-7 step (c) disassembles the right serializer stubs.
-Result pending — see appended notes when it lands.
-
-## The binary deep-dive (todo 7) — pending
-Goal: recover the per-subobject-record serialization grammar (member bit
-layout, change-mask, serializer widths) from TYR's Shipping binary so the
-usmap property lists can be mapped onto the blob bytes.
-
-Anchors available (from prior commits ad3c315/d080ff1; treat VA labels with
-skepticism — `/GL` + .rdata reloc means raw VAs in prior notes may be stale):
-- 44 embedded Iris `*.cpp` PDB path strings (binary_harness.py landmarks).
-- 17,648 serializer function-pointer-table runs in `.rdata` via `.reloc`
-  DIR64 (find_serializer_tables.py) — the authoritative anchor for the
-  NetSerializer Serialize/Deserialize dispatch region.
-
-Plan:
-  (a) Use UE5.6 source (subagent) to fix the EXACT Iris snapshot/initial
-      state grammar (change-mask bits, member order, per-type widths,
-      subobject batching) — so the binary disassembly has a precise target.
-  (b) Anchor the serializer-region VAs from /tmp/serializer_tables.json.
-  (c) Disassemble each subobject-record serializer; recover the byte/bit
-      layout for the recurring record subtypes (the `75`-led one and the
-      other lead-byte families).
-  (d) Build a structural validator: re-segment each n=2 body into subobject
-      records, decode each with the recovered layout, assert clean
-      consumption + non-tautological invariants (NOT "any bytes consume").
-
-## Honesty note
-No claim of U1 closure until (d) passes a non-tautological validator across
-all 10 files. The 36 "MODE1 hits" tautology (random/zero controls) remains
-the anti-pattern to avoid.
+## Next step to close U1 (not yet done)
+Recover TYR's custom per-subobject envelope from the Shipping binary:
+  - Anchor the per-subobject record serializer (the function that writes the
+    blob after the handle list) via the Iris module PDB strings
+    (ReplicationSystemUtil/EngineReplicationBridge/NetSubObjectFactory) +
+    the 17,648 .reloc function-pointer tables.
+  - Disassemble to recover: (a) how the subobject type/class is encoded
+    (or confirmed absent -> then the type is implied by handle order), and
+    (b) the per-subobject member serialization order/widths, so the usmap
+    struct members can be mapped onto the bit stream.
+  This requires the binary deep-dive the todo was scoped for; the source
+  grammar above is the necessary cross-reference but is insufficient alone
+  because TYR diverges at the ENVELOPE layer, not the type layer.
