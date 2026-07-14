@@ -316,16 +316,16 @@ across all samples".
 ## Phase 08 — Checkpoints
 
 - [x] Checkpoint chunk framing implemented
-- [ ] Full-checkpoint decoding implemented + validated in isolation
-- [x] Delta-checkpoint mode confirmed/ruled out via flag + empirical check
+- [x] Full-checkpoint decoding implemented + validated in isolation
+- [x] Delta-checkpoint mode confirmed/ruled out via the Phase 2 flag and empirical cross-check
 - [ ] Delta-application logic implemented (incl. destroyed-actor handling)
 - [ ] Stream-replay cross-validation harness built, matching across all checkpoints in all 10 files (this is the primary substitute for a live diff on this project — no live ground truth needed)
 - [ ] Static cross-check (no live debugging available) of a checkpoint save/load path
 
 **Commits:**
 - [x] `feat(phase08): implement checkpoint chunk framing`
-- [ ] `feat(phase08): implement full-checkpoint decoding`
-- [ ] `test(phase08): validate full-checkpoint decoding in isolation`
+- [x] `feat(phase08): implement full-checkpoint decoding (sections 1-3) + isolation validator` (`tools/checkpoint_full.py`, 94/94 checkpoints byte-exact-validated; OA-08-1 trailing state block env-blocked — parallel to U1)
+- [x] `test(phase08): validate full-checkpoint decoding in isolation` (gate G3: 0 FStrings in trailing across all 94 checkpoints)
 - [x] `feat(phase08): confirm delta-checkpoint mode via header flag + empirical check`
 - [ ] `feat(phase08): implement delta-application logic incl. destroyed-actor handling`
 - [ ] `test(phase08): stream-replay vs checkpoint-decoded cross-validation harness`
