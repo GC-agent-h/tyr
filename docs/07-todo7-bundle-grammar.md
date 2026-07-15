@@ -96,19 +96,42 @@ Recover TYR's per-subobject envelope from the Shipping binary:
     serializers + usmap struct walk) and validate byte-exact consumption of the 1936B
     blob. This is the function-level deep-dive todo 7 was scoped for.
 
-## STATUS UPDATE (2026-07-15) — U1 proven blocked at runtime-only
-Two independent validated negatives now close the STATIC recovery path:
-  1. BINARY: the handle->class->FReplicationStateDescriptor bridge is resolved at
-     runtime (dispatcher global = non-canonical heap/RTTI base, not statically
-     enumerable). tools/dump_registry.py. (commit b777a54)
-  2. USMAP: the recursive usmap-anchored decoder is a COMBINATORIAL TAUTOLOGY — exact
-     width-sum tiling of N subobjects from 1,252 fixed-width structs is reachable for
-     every file AND for a shuffled random width pool (mc hit 0.00e+00 both). The
-     correct handle->struct mapping cannot be distinguished from random by width-sum.
-     tools/u1_tiling_probe.py. (commit c2835bb)
-CONCLUSION: U1 cannot be closed by static binary analysis or by the usmap schema
-alone. Remaining options are RUNTIME-ONLY: (a) debugger capture of the live
-FReplicationStateDescriptor registry during a real match, or (b) an external
-authoritative mapping (game C++ descriptor registrations / a live-process SDK dump
-with actual instance values). Neither is available in this offline environment.
-U1 = KNOWN-BLOCKER (runtime-only), NOT a confirmatory cross-check.
+## STATUS UPDATE (2026-07-15, REVISED) — dumper-7 supplies the external anchor
+
+The 2026-07-15 "U1 = KNOWN-BLOCKER (runtime-only)" conclusion is now
+REFUTED by a provided artifact folder `dumper-7/` (at repo root):
+
+- `dumper-7/Mappings/5.6.0-31351+++Tyr+release-Tyr.usmap` is the AUTHORITATIVE
+  SHIPPING usmap for the EXACT build our replays were produced by (replay header
+  bytes contain "++Tyr+release" + the same gameplay class names). It is parsed by
+  `tools/usmap_parse.py` into per-struct property records (name/type/inner/array).
+- `dumper-7/GObjects-Dump-WithProperties.txt` (20 MB) is the live UObject registry:
+  Class / ScriptStruct / Enum / Function + Default__ CDO instances, each with
+  property NAME + TYPE + BYTE OFFSET. Example: BP_BaseTank.BP_BaseTank_C lists 80+
+  replicated properties (ObjectProperty TurretComponent @0x730, DoubleProperty
+  TrackOffset @0x750, BoolProperty bIsABot @0x7A8, MapProperty VoiceLineMap, ...).
+  84 BlueprintGeneratedClass gameplay entries present. This is the handle->struct
+  LAYOUT bridge the width-sum tautology could not supply.
+- `dumper-7/CppSDK/` full SDK headers + `dumper-7/Dumpspace/*Info.json` + IDA map.
+
+The two 2026-07-15 negatives still HOLD as static-binary facts:
+  1. BINARY: the handle->class->FReplicationStateDescriptor bridge is NOT in the
+     Shipping binary's static tables (dispatcher global = non-canonical heap/RTTI
+     base). tools/dump_registry.py. (commit b777a54)
+  2. USMAP: exact width-sum tiling IS a tautology (the struct assignment cannot be
+     found by width-sum alone). tools/u1_tiling_probe.py. (commit c2835bb)
+
+BUT the conclusion that U1 is runtime-only is NOW INVALID: the authoritative
+runtime type map is available OFFLINE in dumper-7. The remaining missing piece is
+only the PER-REPLAY handle->class bijection, which is recoverable FROM THE REPLAY
+STREAM ITSELF: actor-creation bunches carry the class path as an FString (observed
+in replay header bytes: "BP_CaptureZone.BP_CaptureZone_C", etc.). Combined with
+dumper-7's class schemas, that yields the full handle->layout bridge — NON-
+tautologically, because the struct assignment is grounded in the replay's own
+spawn class names, not a width-sum search.
+
+REVISED CONCLUSION: U1 is UNBLOCKED by dumper-7. The correct next move is to bind
+handles via replay spawn-bunch class names (GObjects/CppSDK/usmap schemas) and
+re-attempt the recursive usmap-anchored bundle decoder with a held-out
+validation (same handle->class->layout binding must tile each file's distinct
+blob). Status: IN PROGRESS (option a), re-started.
