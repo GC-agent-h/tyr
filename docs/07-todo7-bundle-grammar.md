@@ -95,3 +95,20 @@ Recover TYR's per-subobject envelope from the Shipping binary:
   - Then build a faithful recursive Iris decoder (BitReader LSB-first + per-type
     serializers + usmap struct walk) and validate byte-exact consumption of the 1936B
     blob. This is the function-level deep-dive todo 7 was scoped for.
+
+## STATUS UPDATE (2026-07-15) — U1 proven blocked at runtime-only
+Two independent validated negatives now close the STATIC recovery path:
+  1. BINARY: the handle->class->FReplicationStateDescriptor bridge is resolved at
+     runtime (dispatcher global = non-canonical heap/RTTI base, not statically
+     enumerable). tools/dump_registry.py. (commit b777a54)
+  2. USMAP: the recursive usmap-anchored decoder is a COMBINATORIAL TAUTOLOGY — exact
+     width-sum tiling of N subobjects from 1,252 fixed-width structs is reachable for
+     every file AND for a shuffled random width pool (mc hit 0.00e+00 both). The
+     correct handle->struct mapping cannot be distinguished from random by width-sum.
+     tools/u1_tiling_probe.py. (commit c2835bb)
+CONCLUSION: U1 cannot be closed by static binary analysis or by the usmap schema
+alone. Remaining options are RUNTIME-ONLY: (a) debugger capture of the live
+FReplicationStateDescriptor registry during a real match, or (b) an external
+authoritative mapping (game C++ descriptor registrations / a live-process SDK dump
+with actual instance values). Neither is available in this offline environment.
+U1 = KNOWN-BLOCKER (runtime-only), NOT a confirmatory cross-check.
