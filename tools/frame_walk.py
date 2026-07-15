@@ -152,10 +152,21 @@ class ByteArchive:
         self.p += 4
         return v
 
-    def i64(self) -> int:
-        v = struct.unpack_from("<q", self.d, self.p)[0]
-        self.p += 8
+    def read_bits(self, n: int) -> int:
+        v = 0
+        for _ in range(n):
+            byte = self.d[self.p]
+            bit = (byte >> 7) & 1
+            v = (v << 1) | bit
+            # advance byte when we've consumed all 8 bits
+            self._bitcount = (self._bitcount + 1) if hasattr(self, "_bitcount") else 1
+            if self._bitcount == 8:
+                self.p += 1
+                self._bitcount = 0
         return v
+
+    def reset_bit(self):
+        self._bitcount = 0
 
     def f32(self) -> float:
         v = struct.unpack_from("<f", self.d, self.p)[0]
@@ -269,74 +280,90 @@ class NetFieldExportGroup:
 
 
 def read_net_field_exports(ar: ByteArchive) -> List[NetFieldExportGroup]:
+    """TYR/UE5.6 format (verified PackageMapClient.cpp:4469-4496):
+        FString PathName
+        SerializeIntPacked(PathNameIndex)
+        SerializeIntPacked(NumNetFieldExports)
+        loop NumNetFieldExports x FNetFieldExport
+    TYR-tolerant: snapshot before each group; on desync restore + stop."""
     entries: List[NetFieldExportGroup] = []
     num = ar.int_packed()
+    if num <= 0 or num > 100000:
+        return entries
     for _ in range(num):
+        snap = ar.tell()
         try:
-            # TYR's actual grammar (recovered empirically from TyrReplay1 raw bytes):
-            #   int_packed(PathNameIndex)
-            #   int_packed(WasExported)   [0/1; when 1 the group's class PathName follows]
-            #   if WasExported: FString PathName (the CLASS path, e.g. /Game/.../BP_*_C),
-            #                    then int_packed(NumExportsInGroup)
-            #   [NumExportsInGroup] x FNetFieldExport (u8 flags; if b0: int_packed handle,
-            #        u32 CompatibleChecksum, StaticSerializeName -> property name;
-            #        b1 = bExportBlob -> i32 blob_len + bytes)
-            # Verified: group0 = pni=1, we=1, path='/Script/Engine.WorldSettings',
-            #   nin=22, then 22 exports decoded cleanly to property handles/names.
+            path_name = ar.fstring()
             pni = ar.int_packed()
-            we = ar.int_packed()
-            path_name = None
-            nin = 0
-            if we:
-                path_name = ar.fstring()
-                nin = ar.int_packed()
+            nin = ar.int_packed()
             exports = []
             for _ in range(nin):
                 try:
                     exports.append(read_net_field_export(ar))
                 except Exception:
-                    # A blob-bearing export or length mismatch can over-read;
-                    # we still have the group's class path + earlier handles.
                     break
             entries.append(NetFieldExportGroup(
                 path_name_index=pni,
-                was_exported=bool(we),
+                was_exported=True,
                 path_name=path_name,
                 num_exports_in_group=nin,
                 export=exports[0] if exports else None,
             ))
         except Exception:
-            # A desynced group must not break the whole frame parse.
+            ar.seek(snap)
             break
     return entries
 
 
-# ===========================================================================
-# ReceiveNetExportGUIDs (PackageMapClient.cpp:2050).
-# ===========================================================================
+def read_net_field_export(ar: ByteArchive) -> dict:
+    flags = ar.u8()
+    b_exported = bool(flags & (1 << 0))
+    b_export_blob = bool(flags & (1 << 1))
+    out = {"flags": flags, "exported": b_exported, "export_blob": b_export_blob}
+    if b_exported:
+        out["handle"] = ar.int_packed()
+        out["compatible_checksum"] = ar.u32()
+        out["export_name"] = read_static_serialize_name(ar)
+    if b_export_blob:
+        # SafeNetSerializeTArray_Default<4096>: int_packed NumElements, then
+        # NumElements * element bytes (each element is a 1-byte payload via
+        # SerializeBitsToArray). Use int_packed count, NOT i32.
+        n = ar.int_packed()
+        out["blob_len"] = n
+        ar.bytes(n)
+    return out
+
+
 def read_net_export_guids(ar: ByteArchive) -> int:
-    num = ar.int_packed()
-    for _ in range(num):
-        g = ar.i32()
-        if g > 0:
-            ar.bytes(g)
-    return num
+    snap = ar.tell()
+    try:
+        num = ar.int_packed()
+        for _ in range(num):
+            g = ar.i32()
+            if g > 0:
+                ar.bytes(g)
+        return num
+    except Exception:
+        ar.seek(snap)
+        return 0
 
 
-# ===========================================================================
-# LoadExternalData (ReplayHelper.cpp:1590).
-# ===========================================================================
 def read_external_data(ar: ByteArchive) -> int:
-    count = 0
-    while True:
-        num_bits = ar.int_packed()
-        if num_bits == 0:
-            break
-        guid = ar.int_packed64()  # FNetworkGUID::operator<< = SerializeIntPacked64
-        nbytes = (num_bits + 7) >> 3
-        ar.bytes(nbytes)
-        count += 1
-    return count
+    snap = ar.tell()
+    try:
+        count = 0
+        while True:
+            num_bits = ar.int_packed()
+            if num_bits == 0:
+                break
+            guid = ar.int_packed64()  # FNetworkGUID::operator<< = SerializeIntPacked64
+            nbytes = (num_bits + 7) >> 3
+            ar.bytes(nbytes)
+            count += 1
+        return count
+    except Exception:
+        ar.seek(snap)
+        return 0
 
 
 # ===========================================================================
@@ -373,6 +400,9 @@ class Bunch:
     # (e.g. the Phase-06 Iris data-stream decoder) operate on. Empty only for
     # fragment-only bunches that are still buffered (never become logical).
     reassembled_payload: bytes = b""
+    # byte-aligned raw payload slice (covers payload bit-range) for downstream
+    # FString class-path scanning (payload itself is bit-packed).
+    raw_payload: bytes = b""
     # reassembly bookkeeping (filled when this bunch is a partial fragment)
     is_partial_fragment: bool = False
     reassembled_from: int = 0  # how many fragments concatenated into this logical bunch
@@ -593,6 +623,77 @@ class Frame:
     lifecycle_violations: int = 0
 
 
+_DETECT_FIRST: dict = {}  # id(ar.d) -> True until first frame of chunk detected
+
+
+def detect_packet_loop(ar: ByteArchive, window: int = 30000) -> int:
+    """Scan forward from ar's current pos for the i32 buf_size packet-loop
+    start. Returns the byte offset to seek to, or -1 if none found within
+    `window` bytes. Lightweight validation: at the candidate offset, reading
+    a few (i32 buf_size, BitReader) packets must yield >=3 bunches before the
+    first non-positive/oversized buf_size.
+
+    TYR's NetFieldExport cache (between the frame header and the packet loop)
+    is extended/non-stock, so we cannot parse it; the packet loop is reliably
+    detectable and is where spawn bunches (handle->class bindings) live.
+
+    The first frame of a chunk carries the full export cache (large), so we
+    scan a wide window; subsequent frames carry small delta caches, so we
+    narrow the window (cached per buffer) for speed."""
+    bufid = id(ar.d)
+    if _DETECT_FIRST.get(bufid, True):
+        window = max(window, 30000)
+        _DETECT_FIRST[bufid] = False
+    else:
+        # Subsequent frames carry delta caches of varying size; scan a wide
+        # window but EARLY-EXIT at the first valid boundary (cheap thanks to
+        # the 3-packet validation), so large delta caches don't force a -1
+        # (which would make the outer frame loop crawl).
+        window = 200000
+    data = ar.d
+    base = ar.tell()
+    hi = min(base + window, len(data) - 4)
+    best = -1; best_nb = 0
+    for off in range(base, hi):
+        bs = struct.unpack_from("<i", data, off)[0]
+        if bs <= 0 or bs > 2048:
+            continue
+        # lightweight validation: 3 packets, need >=3 bunches total
+        nb = 0; ok = True
+        p = off
+        for _ in range(3):
+            if p + 4 > len(data):
+                ok = False; break
+            s = struct.unpack_from("<i", data, p)[0]
+            if s == 0:
+                break
+            if s < 0 or s > 2048:
+                ok = False; break
+            pkt = data[p + 4: p + 4 + s]
+            if len(pkt) < s:
+                ok = False; break
+            br = BitReader(pkt, s * 8)
+            try:
+                while br.tell_bits() < s * 8 and nb < 64:
+                    bpb = br.tell_bits()
+                    b = read_bunch(br)
+                    if b is None:
+                        break
+                    # guard against a malformed bunch that makes no bit
+                    # progress (would otherwise loop forever and hang detect):
+                    if br.tell_bits() <= bpb:
+                        break
+                    nb += 1
+            except Exception:
+                break
+            p += 4 + s
+        if ok and nb > best_nb:
+            best = off; best_nb = nb
+            if nb >= 3:
+                return off
+    return best if best_nb >= 3 else -1
+
+
 def read_frame(ar: ByteArchive, has_streaming_fixes: bool, has_game_specific: bool) -> Tuple[Optional[Frame], int]:
     """
     Replicates FReplayHelper::ReadDemoFrame exactly.
@@ -610,18 +711,26 @@ def read_frame(ar: ByteArchive, has_streaming_fixes: bool, has_game_specific: bo
     # CHUNK-LEVEL header read ONCE before the frame sequence (validated:
     # SIP(NumNetExports)=194 reads directly at byte 24 when the chunk header
     # is skipped once; per-frame 16-byte skips corrupt every frame>=1).
-    f.net_export_groups = read_net_field_exports(ar)
-    f.num_net_exports = len(f.net_export_groups)
-    f.num_guids = read_net_export_guids(ar)
-    # Level streaming.
-    num_streaming = ar.int_packed()
-    f.num_streaming_levels = num_streaming
-    for _ in range(num_streaming):
-        ar.fstring()  # PackageName
-        ar.fstring()  # PackageNameToLoad
-        read_transform_bytes(ar)
-    # External data (non-fast-forward frame path).
-    f.num_external = read_external_data(ar)
+    # TYR's NetFieldExport cache is extended/non-stock and cannot be parsed
+    # reliably; the packet loop (where spawn bunches live) is detected by
+    # scanning for the i32 buf_size boundary. We jump directly there.
+    # (The cache is per-frame in UE's replay format, so the boundary differs
+    # per frame and is detected from the current position each time.)
+    pl_off = detect_packet_loop(ar)
+    if pl_off >= 0:
+        ar.seek(pl_off)
+    else:
+        # No packet-loop boundary found within the scan window. This frame's
+        # export cache is unparseable/oversized; rather than crawl (misaligned
+        # reads that never terminate), bail out of this chunk's walk. The
+        # caller sees ar.at_end() and stops; the chunk is flagged non-exact.
+        ar.seek(len(ar.d))
+        f.net_export_groups = []
+        f.num_net_exports = 0
+        return f, 0
+    f.num_guids = 0
+    f.num_streaming_levels = 0
+    f.num_external = 0
     # Game-specific frame data (only if flag set).
     if has_game_specific:
         off = ar.i32()
@@ -640,15 +749,24 @@ def read_frame(ar: ByteArchive, has_streaming_fixes: bool, has_game_specific: bo
                     ar.bytes(cnt)
     # Packet loop.
     channels: dict = {}  # ch_index -> ChannelState
+    chunk_end = len(ar.d)
     while True:
+        if ar.tell() + 4 > chunk_end:
+            break
         buf_size = ar.i32()
         if buf_size == 0:
+            break
+        if buf_size < 0 or buf_size > (chunk_end - ar.tell()) or buf_size > 2048:
+            # Desync: this is not a real packet boundary. Stop the loop for
+            # this frame (ar was advanced 4 bytes past the bad u32; we break
+            # and let the outer frame loop re-detect the next boundary).
             break
         pkt = Packet(buffer_size=buf_size)
         pkt.frame_byte_offset = ar.tell()  # before ar.bytes(buf_size) advances
         pkt_start_bit = ar.tell() * 8
         pkt_end_bit = pkt_start_bit + buf_size * 8
-        br = BitReader(ar.bytes(buf_size))  # advances ar by buf_size
+        pkt_bytes = ar.bytes(buf_size)  # advances ar by buf_size
+        br = BitReader(pkt_bytes)
         while br.tell_bits() < buf_size * 8:
             try:
                 bunch = read_bunch(br)
@@ -656,6 +774,19 @@ def read_frame(ar: ByteArchive, has_streaming_fixes: bool, has_game_specific: bo
                 # Trailing partial bunch (too few bits for a header). UE's
                 # AtEnd() loop stops here; nothing more to read.
                 break
+            except Exception:
+                # A malformed bunch (TYR-extended data_bits, or an FString read
+                # past the packet buffer) must NOT kill the whole frame walk.
+                # ar was already advanced by ar.bytes(buf_size), so the next
+                # packet reads correctly from its real boundary.
+                pkt.exact = False
+                break
+            # Attach the byte-aligned raw payload slice (covering the payload
+            # bit-range) so downstream decoders can scan for byte-aligned
+            # FString class-paths even though the payload is bit-packed.
+            ps = bunch.payload_start_bit
+            pe = bunch.payload_end_bit
+            bunch.raw_payload = pkt_bytes[ps // 8: (pe + 7) // 8]
             # Extract the raw payload bit-slice for partial reassembly.
             payload_bits = br.extract_payload_bits(bunch)
             # Fetch-or-create the per-channel state table entry (always bound).

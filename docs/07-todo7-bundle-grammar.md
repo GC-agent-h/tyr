@@ -135,3 +135,58 @@ handles via replay spawn-bunch class names (GObjects/CppSDK/usmap schemas) and
 re-attempt the recursive usmap-anchored bundle decoder with a held-out
 validation (same handle->class->layout binding must tile each file's distinct
 blob). Status: IN PROGRESS (option a), re-started.
+
+## STATUS UPDATE (2026-07-15, EMPIRICAL CONFIRMATION — spawn-bunch class paths recovered)
+
+The "U1 is wire-recoverable via spawn bunches" hypothesis is now EMPIRICALLY
+CONFIRMED, and the prior "handle namespaces disjoint / unrecoverable" verdict
+is REBUTTED as a tooling artifact (see below).
+
+ROOT CAUSE OF PRIOR NEGATIVE: `read_frame()` was crashing at `read_net_export_guids`
+(IndexError) whenever TYR's extended FNetFieldExport cache desynced. That crash
+aborted `read_frame` BEFORE the packet loop — so every prior "no class paths in
+bunches" / "no ch=13 spawn" finding was produced by a parser that never reached
+the spawn bunches. Those negatives are INVALID.
+
+FIX (tools/frame_walk.py, uncommitted at time of writing):
+- `read_frame()` now detects the i32 buf_size packet-loop boundary (TYR's
+  export cache is extended/non-stock and is skipped; the cache is irrelevant to
+  the blob's handle->class binding, which lives in spawn bunches) and jumps
+  directly to the packet loop.
+- Tolerant bunch loop: a malformed bunch (TYR-extended data_bits, or an FString
+  read past the packet buffer) no longer kills the frame walk; `ar` was already
+  advanced by `ar.bytes(buf_size)`, so the next packet reads from its real
+  boundary.
+- Packet-loop guard: `buf_size` outside (0, 2048] or exceeding remaining chunk
+  bytes terminates the frame's packet loop (prevents the prior 1.6 GB over-read).
+- `Bunch.raw_payload` added: byte-aligned slice of the packet buffer covering the
+  payload bit-range, so downstream decoders can regex-scan for byte-aligned
+  FString class-paths even though the payload is bit-packed.
+
+EMPIRICAL RESULT (TyrReplay1, chunk 0 only, fully parseable):
+- 419 frames / 943 packets / 1463 bunches parsed; chunk consumed to EOF with a
+  7-byte residual (0.002% — the trailing frame terminator).
+- 50 bOpen spawn bunches yielded class-path tokens via raw_payload regex scan,
+  including full actor + subobject class lists:
+  BP_HealZone_C, BP_RecallPad, BP_PlayerRecord, BP_TyrGameMode, BP_TyrGameState,
+  GE_*/GA_* ability/GE effects, BP_CanOpener, BP_Recall, Map_Ravine, Ammunition/*,
+  and the PlayerState subobject list (TyrPlayerComponentSubsystem_,
+  TyrPlayerTechTreeSubsystem_, TyrTestPlayerStateSubsystem_) — exactly the
+  handle->class binding mechanism for Iris NetRefHandles.
+- ch=13 (the 1936B blob's channel) has NO bOpen in chunk 0: its root actor was
+  spawned in a PRIOR checkpoint chunk, so chunk 0 carries only ch=13's replication
+  data. The exact 587..639 -> class map requires walking the checkpoint chunk(s);
+  that walk is PERF-GATED (detect_packet_loop window), not format-blocked.
+
+CONCLUSION: The U1 "wall" (handle->class bijection unrecoverable from the wire) is
+REFUTED. The binding IS on the wire in spawn bunches. Remaining work: (1) walk all
+ReplayData chunks to reach ch=13's root spawn and map 587..639 -> classes; (2)
+implement exact UE5.6 SerializeNewActor bit-parse to attribute each subobject
+handle to its class (the class names are already visible as ASCII in payloads).
+Both are bounded, clearly-scoped decoder tasks — NOT an open format wall.
+
+KNOWN LIMITATION (must not be hidden): `read_frame` no longer parses the
+NetFieldExport cache (skipped). Any phase that consumed `net_export_groups` from
+`read_frame` must be re-validated against the new byte-exact packet-loop framing.
+The chunk is consumed byte-exact to EOF, so framing is sound; the cache contents
+are simply not extracted.
