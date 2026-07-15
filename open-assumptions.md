@@ -283,6 +283,48 @@ to a semantically-plausible value within known level bounds.
 
 ---
 
+### OA-06-4 — `frame_walk.py` parser REGRESSED by commit `11cf13c`; "byte-exact PASSED" verdict is a tautology; U1 "refuted" claim unsupported
+
+- **What:** Between the Phase-05 validated state (`49673b2`) and HEAD (`5e52017`),
+  commit `11cf13c` ("feat(phase06): U1 carrier framing repair + spawn-bunch
+  class-path recovery") replaced the source-faithful `read_frame()` with a
+  `detect_packet_loop()` heuristic and commit `5e52017` claims the U1
+  "wall" is "refuted, green-validated."
+- **Why this is an OPEN/regressed item, not progress:** (a) `detect_packet_loop()`
+  scans up to 200,000 bytes forward for an `i32 buf_size` that yields ≥3
+  bunches, **skipping the entire NetFieldExport cache** (the export-cache
+  parsers `read_net_field_exports`/`read_net_export_guids`/`read_external_data`
+  are still defined but no longer called from `read_frame`). This misaligns
+  frame boundaries: TyrReplay1 drops from **45,295 frames / 93,574 bunches /
+  real timestamps 0.0005s→201.39s** (validated `49673b2`) to **4,471 frames /
+  17,192 bunches / garbage timestamps ±1e38** (HEAD). A frame walk with
+  ±1e38 timestamps is parsing from the wrong byte offsets, not "byte-exact."
+  (b) The aggregate `VERDICT: byte-exact framing PASSED` is set by
+  `pkt.exact = True` *by construction* (after `ar.bytes(buf_size)` consumes
+  exactly `buf_size` bytes) and the check only counts `inexact_packets`, which
+  is always 0 — it cannot fail and proves nothing. (c) The "255 spawns
+  recovered" evidence (`u1_spawn_classmap.py`, `u1_ch13_root.py`) regex-scans
+  **bit-packed, misaligned** payload bytes for ASCII class-path hints
+  (`BP_`, `_C`, `Component`, `Ability`, `Player`, `Vehicle`, `Tank`, `Game`,
+  `Tyr`, …) — coincidence-prone on bit-packed data, not class-name recovery.
+- **Impact:** every downstream tool that imports `frame_walk` (60+ tools,
+  incl. `carrier_decode.py`, the Family A/B/C decoders, `u1_*`) now consumes
+  misaligned frames from the regressed parser. Their prior structural
+  validations (Family B 100% 13B, Family C terminal-00) were obtained on the
+  OLD validated parser and must be re-confirmed after revert.
+- **Risk:** HIGH — the U1 "refuted" conclusion is built entirely on the
+  regressed parser + ASCII-regex coincidence; reverting `frame_walk.py` to
+  `49673b2` is required before any U1 handle→class claim can be trusted.
+- **Close condition:** (1) revert `frame_walk.py` `read_frame` to the
+  validated `49673b2` version (re-call the export-cache parsers); (2) replace
+  the tautological `pkt.exact`/`VERDICT` with a real bit-exact assertion
+  (sum of bunch-header + BunchDataBits == packet bytes*8, per-frame residual
+  == 0); (3) re-run the Family A/B/C structural validators on the restored
+  parser; (4) re-attempt U1 spawn-class recovery via a real
+  `SerializeNewActor` bit-parser, not ASCII regex over bit-packed bytes.
+
+---
+
 ## Phase 08 — Checkpoints
 
 ### OA-08-1 — Checkpoint trailing state block is Iris-encoded (env-blocked, parallel to U1)

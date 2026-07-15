@@ -256,7 +256,45 @@ across all samples".
   replication sub-steps (dirty-state / NetSerializer / FastArray) but does NOT
   gate t7. Tools are untracked per scope discipline.
 
-- [x] `ReplicationStateDescriptorBuilder` traversal reimplemented, cross-validated against observed wire order
+> ## RECONCILIATION NOTE (2026-07-15, post-HEAD audit) — do NOT treat commits
+> `6632157`/`11cf13c`/`5e52017` as progress.
+>
+> A HEAD audit was run because PROGRESS.md (last edited at `6632157`) had
+> drifted from `git log` (HEAD = `5e52017`, claiming "U1 wall refuted,
+> green-validated, all 14 chunks byte-exact, 255 spawns recovered"). The claim
+> does NOT hold under inspection:
+>
+> 1. **`tools/frame_walk.py` was REGRESSED by `11cf13c`.** The Phase-05
+>    validated `read_frame()` (commit `49673b2`) parsed the NetFieldExport
+>    cache source-faithfully and produced, for TyrReplay1: **45,295 frames /
+>    93,574 bunches / real timestamps 0.0005s→201.39s** (matches
+>    `length_in_ms=201393`). The HEAD `read_frame` replaces that with
+>    `detect_packet_loop()` — a forward scan of up to 200,000 bytes that
+>    **skips the entire NetFieldExport cache** and hunts for an `i32 buf_size`
+>    yielding ≥3 bunches. That search misaligns every frame: TyrReplay1 now
+>    yields **4,471 frames / 17,192 bunches / timestamps ±1e38** (garbage,
+>    read from misaligned offsets). The export-cache parsers
+>    (`read_net_field_exports`/`read_net_export_guids`/`read_external_data`)
+>    still exist but are NO LONGER CALLED from `read_frame`.
+> 2. **The "byte-exact PASSED" verdict is a tautology** (both old and new):
+>    `pkt.exact = True` is set *by construction* after
+>    `ar.bytes(buf_size)` consumes exactly `buf_size` bytes, and the aggregate
+>    check only counts `inexact_packets`, which is always 0. It proves nothing.
+> 3. **The "255 spawns recovered" evidence is coincidence-prone.** `u1_spawn_classmap.py`
+>    / `u1_ch13_root.py` regex-scan the `raw_payload` slice of **bit-packed,
+>    misaligned** bunch bodies for ASCII runs containing `BP_`, `_C`,
+>    `Component`, `Ability`, `Player`, `Vehicle`, `Tank`, `Game`, `Tyr`, etc.
+>    Bit-packed data is not byte-aligned (`raw_payload = pkt_bytes[ps//8:...]`
+>    drops `ps%8` bits); `[\x20-\x7e]{6,}` with those hint tokens across
+>    17,192 bunches produces mass ASCII-fragment hits, not class-name recovery.
+>
+> **Conclusion:** U1 remains OPEN exactly as this file already states. The
+> todo-7 doc (`docs/07-todo7-bundle-grammar.md`) and commits `11cf13c`/`5e52017`
+> overstate the result. **Recommended next action before any further U1 work:**
+> revert `frame_walk.py` to the validated `49673b2` `read_frame` (and re-anchor
+> the bit-packed-payload scans to a real SerializeNewActor bit-parser, not
+> ASCII regex). See `open-assumptions.md` OA-06-4.
+>
 - [x] **Phase-05→06 payload handoff: locate + structurally validate the real replication carrier in all 10 files** — CHARACTERIZED/DONE (t7). Decoder in `tools/carrier_decode.py` classifies + validates every `reassembled_payload`; ≥99% structural pass (B 99.07% exact-13B-with-cb, C 100% terminal-00). Per 2026-07-13 decision, ≥99% structural validation is accepted as sufficient for this sub-step; see plan doc "Acceptance criterion for carrier decode".
   - [ ] **U1 (OPEN, blocks downstream property decode): semantic decode of Family A blob + object-id resolution.** 
     - **2026-07-14 RESOLVED (CANDIDATE, source-grounded): the id-namespace sub-question is answered** — Family-A keys are Iris **static object handles** (`IsStatic()` == ODD id, `NetRefHandle.h:60-64`) **compacted to u16** by TYR's carrier (real `FNetRefHandle` is a 64-bit `SerializeIntPacked64` varint, `ObjectNetSerializer.cpp:29-57`, never u16). Validator `tools/carrier_decode.py::familyA_key_invariant` asserts 100% of keys fit u16 AND aggregate odd-rate ≥95% (random ~50%); hard assertion prints `VERDICT: U1 key-namespace RESOLVED (CANDIDATE)` — **passed across all 10 files** (commit 555303f).
