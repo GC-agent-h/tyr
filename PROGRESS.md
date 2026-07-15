@@ -294,7 +294,7 @@ across all samples".
 
 **Commits:**
 - [x] `docs(phase06): correct Iris source-of-truth paths to in-repo files (subset-aware)` (3b37e69)
-- [x] `feat(phase06): reimplement ReplicationStateDescriptorBuilder traversal` (9f0fdf7)
+- [x] `feat(phase06): reimplement ReplicationStateDescriptorBuilder traversal (sub-step 1)` (fd544ab)
 - [x] `docs(phase06): record OA-06-1 (SDK lacks COND_*/InitOnly reflection metadata)` (893aaca)
 - [x] `feat(phase06): Iris ReplicationStateDescriptorBuilder-backed data-stream decoder + self-test` (64228bf)
 - [x] `feat(phase06): source-faithful Iris envelope + DataStreamManager decoders; synthetic round-trip self-tests green` (8f8f8d3)
@@ -304,6 +304,19 @@ across all samples".
 - [x] `docs(phase06): record Family-C internal-frame characterization (ADDENDUM 5); sub-step 3 — bit-packed serial stream, naive sub-entry hypothesis held-out-refuted`
 - [x] `feat(phase06): add Family-A temporal-coherence localizer (familyA_temporal.py) — differential control, REAL 29.8% vs RANDOM 0.0%` (`bbf08f6`)
 - [x] `feat(phase06): add Family-C temporal-coherence localizer (familyC_temporal.py) — by ch_index, REAL 18.9% vs RANDOM 0.0%` (`4aa56d9`)
+- [x] `docs(progress): record TYR binary availability + Phase06 sub-step 1 done, U1 decode path` (1005688)
+- [x] `feat(phase06): binary disassembly harness + dumper-7 audit (no anchor triple found)` (ad3c315)
+- [x] `docs(progress): record dumper-7 audit (no anchor triple) + binary disassembly start, carrier reframed` (cd14e9e)
+- [x] `feat(phase06): reloc-based Iris serializer-table locator + disassembly findings update` (d080ff1)
+- [x] `docs(progress): update U1 disassembly status (serializer vtables located, no wire class anchor, U1 open)` (f539775)
+- [x] `feat(phase06): SDK-descriptor bit-decoder bridge (u1_bridge.py); 0/7372 flat-class match proves recursive bundle` (b258db3)
+- [x] `feat(phase06): decode TYR .usmap (ZSTD Zen mapping) -> runtime schema anchor for U1` (535345e)
+- [x] `docs(progress): U1 anchor found — TYR .usmap decodes to full runtime schema` (0559086)
+- [x] `feat(phase06): U1 re-run against full TYR .usmap schema (todo 8)` (bb90e80)
+- [x] `docs(progress): correct premature U1 CANDIDATE-CLOSED — todo 8 re-run is a VALIDATED NEGATIVE` (9aa9bf1)
+- [x] `docs(phase06): todo-7 bundle-grammar findings — empirical observations + Iris binary anchor map` (3fdda26)
+- [x] `docs(phase06): todo-7 — source-verified Iris serializer grammar + envelope falsifications` (0375484)
+- [x] `docs(phase06): todo-7 — retract wrong-model falsifications; add model-correct stock-batch refutation` (169128a)
 
 ---
 
