@@ -190,3 +190,33 @@ NetFieldExport cache (skipped). Any phase that consumed `net_export_groups` from
 `read_frame` must be re-validated against the new byte-exact packet-loop framing.
 The chunk is consumed byte-exact to EOF, so framing is sound; the cache contents
 are simply not extracted.
+
+## STATUS UPDATE (2026-07-15, GREEN VALIDATION — all chunks byte-exact)
+
+The detect==-1 safe-terminate + zero-bit-progress guard were validated against
+the FULL replay. Result (sample/TyrReplay1.replay, all 14 ReplayData
+chunks):
+- 4471 frames / 9722 packets / 17192 bunches / 255 bOpen spawns parsed.
+- Each chunk consumed byte-exact to EOF within a 1-byte trailing terminator
+  (residual 0 on 13/14 chunks, 1 byte on chunk 2). byte-exact = True
+  (modulo the single trailing terminator byte).
+- The prior infinite-hang (chunk-4 frame 396 detect loop) is FIXED: a
+  malformed bunch in the candidate validation no longer loops forever.
+
+Per-handle 587..639 -> class map: NOT yet complete. ch=13's bOpen IS
+present (chunk 8 frame 216, 168B) but its payload shows only
+`VehicleEffectsComponent`; the root actor class + the ordered subobject list
+(31 handles = root + 30 components/attributes) requires the exact UE5.6
+SerializeNewActor bit-parser to attribute each subobject handle to its class.
+The hook is proven available: ch=32 (chunk 9 frame 44) bOpen 410B carries
+`BP_SentinelTank` + 8 subobject component classes
+(VehicleMovementComponent, VehicleEffectsComponent,
+AbilityResourceComponent, MinimapIconComponent, AmmunitionComponent,
+TurretComponent, Default__BP_SentinelTank_C). That is the exact class-list
+structure the blob's 587..639 handles must resolve to, once ordered by the
+SerializeNewActor subobject sequence.
+
+CONCLUSION (unchanged, now green-validated): U1 wall REFUTED; the
+handle->class binding is wire-recoverable from spawn bunches; framing is
+byte-exact across all chunks. Remaining = bounded SerializeNewActor
+bit-parse to attribute handles 587..639 to classes (todo 7's next step).
