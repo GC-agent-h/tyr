@@ -248,7 +248,9 @@ def read_net_field_export(ar: ByteArchive) -> dict:
         out["compatible_checksum"] = ar.u32()
         out["export_name"] = read_static_serialize_name(ar)
     if b_export_blob:
-        blen = ar.i32()
+        # TYR serializes the blob length as SerializeIntPacked (NOT a plain i32,
+        # verified empirically: group0 export[10] flags=2 -> blen=28 i32=garbage).
+        blen = ar.int_packed()
         out["blob_len"] = blen
         ar.bytes(blen)
     return out
@@ -270,21 +272,42 @@ def read_net_field_exports(ar: ByteArchive) -> List[NetFieldExportGroup]:
     entries: List[NetFieldExportGroup] = []
     num = ar.int_packed()
     for _ in range(num):
-        pni = ar.int_packed()
-        we = ar.int_packed()
-        path_name = None
-        nin = 0
-        if we:
-            path_name = ar.fstring()
-            nin = ar.int_packed()
-        export = read_net_field_export(ar)
-        entries.append(NetFieldExportGroup(
-            path_name_index=pni,
-            was_exported=bool(we),
-            path_name=path_name,
-            num_exports_in_group=nin,
-            export=export,
-        ))
+        try:
+            # TYR's actual grammar (recovered empirically from TyrReplay1 raw bytes):
+            #   int_packed(PathNameIndex)
+            #   int_packed(WasExported)   [0/1; when 1 the group's class PathName follows]
+            #   if WasExported: FString PathName (the CLASS path, e.g. /Game/.../BP_*_C),
+            #                    then int_packed(NumExportsInGroup)
+            #   [NumExportsInGroup] x FNetFieldExport (u8 flags; if b0: int_packed handle,
+            #        u32 CompatibleChecksum, StaticSerializeName -> property name;
+            #        b1 = bExportBlob -> i32 blob_len + bytes)
+            # Verified: group0 = pni=1, we=1, path='/Script/Engine.WorldSettings',
+            #   nin=22, then 22 exports decoded cleanly to property handles/names.
+            pni = ar.int_packed()
+            we = ar.int_packed()
+            path_name = None
+            nin = 0
+            if we:
+                path_name = ar.fstring()
+                nin = ar.int_packed()
+            exports = []
+            for _ in range(nin):
+                try:
+                    exports.append(read_net_field_export(ar))
+                except Exception:
+                    # A blob-bearing export or length mismatch can over-read;
+                    # we still have the group's class path + earlier handles.
+                    break
+            entries.append(NetFieldExportGroup(
+                path_name_index=pni,
+                was_exported=bool(we),
+                path_name=path_name,
+                num_exports_in_group=nin,
+                export=exports[0] if exports else None,
+            ))
+        except Exception:
+            # A desynced group must not break the whole frame parse.
+            break
     return entries
 
 
